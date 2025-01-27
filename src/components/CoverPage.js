@@ -34,7 +34,7 @@ const CoverPage = ({ title, children }) => (
             content={
                 <Box align="center" gap="xsmall">
                     <Text size="small" weight="bold">
-                        &copy; {new Date().getFullYear()} Campus Canteen
+                        &copy; {new Date().getFullYear()} Afoozo
                     </Text>
                     <Text size="xsmall" color="dark-6">
                         All rights reserved.

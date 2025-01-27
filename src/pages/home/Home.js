@@ -1,15 +1,21 @@
 import React, { useContext } from 'react';
 import { Box, Grid, InfiniteScroll, Text } from 'grommet';
 
-import { RoutedButton, Tile } from '../../components';
+import { CoverPage, RoutedButton, Tile } from '../../components';
 import { CartContext } from '../../context/cart';
 
 // eslint-disable-next-line react/prop-types
 const Home = () => {
-    const { dishes } = useContext(CartContext);
-    let homeCards = dishes['categorys'];
+    // const { dishes } = useContext(CartContext);
+    // let homeCards = dishes['categorys'];
+    let homeCards = [];
     return (
-        <Box flex pad="medium" margin={{ left: 'medium', top: 'small', right: 'small' }}>
+        <Box
+            flex
+            pad="medium"
+            margin={{ left: 'medium', top: 'small', right: 'small' }}
+            align="left"
+        >
             <Grid columns="small" gap="small">
                 <InfiniteScroll items={homeCards}>
                     {(card) => (

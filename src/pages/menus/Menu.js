@@ -17,41 +17,39 @@ const Menus = () => {
     } = useContext(CartContext);
 
     const MenuTile = ({ header, menu = [] }) => (
-        <CoverPage title={header}>
-            <Tile title={header}>
-                {menu.length > 0 ? (
-                    menu.map((item, index) => (
-                        <Box
-                            key={index}
-                            flex={false}
-                            tag="header"
-                            direction="row"
-                            justify="between"
-                            align="center"
-                            gap="small"
-                            style={{ zIndex: '2' }}
-                            pad={{ vertical: 'xsmall', horizontal: 'small' }}
-                            border={{ side: 'bottom', color: 'light-4' }}
-                        >
-                            <Box flex={false} direction="row" align="center">
-                                <Text size="xsmall">{item.name}</Text>
-                            </Box>
-                            <Box flex={false} direction="row" align="center">
-                                <AddToCartButton item={item} addToCart={addToCart} updateCartQuantity={updateCartQuantity} />
-                            </Box>
-                        </Box>
-                    ))
-                ) : (
+        <Tile title={header}>
+            {menu.length > 0 ? (
+                menu.map((item, index) => (
                     <Box
+                        key={index}
+                        flex={false}
+                        tag="header"
+                        direction="row"
+                        justify="between"
                         align="center"
-                        pad="medium"
-                        border={{ side: 'top', color: 'light-4' }}
+                        gap="small"
+                        style={{ zIndex: '2' }}
+                        pad={{ vertical: 'xsmall', horizontal: 'small' }}
+                        border={{ side: 'bottom', color: 'light-4' }}
                     >
-                        <Text color="status-critical">No items available</Text>
+                        <Box flex={false} direction="row" align="center">
+                            <Text size="xsmall">{item.name}</Text>
+                        </Box>
+                        <Box flex={false} direction="row" align="center">
+                            <AddToCartButton item={item} addToCart={addToCart} updateCartQuantity={updateCartQuantity} />
+                        </Box>
                     </Box>
-                )}
-            </Tile>
-        </CoverPage>
+                ))
+            ) : (
+                <Box
+                    align="center"
+                    pad="medium"
+                    border={{ side: 'top', color: 'light-4' }}
+                >
+                    <Text color="status-critical">No items available</Text>
+                </Box>
+            )}
+        </Tile>
     );
 
     const AddToCartButton = ({ item, updateCartQuantity, addToCart }) => {

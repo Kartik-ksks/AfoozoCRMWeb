@@ -4,6 +4,7 @@ import theme from './Theme';
 import { HashRouter } from 'react-router-dom';
 import { ResponsiveProvider } from './context/responsive';
 import MenuApp from './MenuApp';
+import { SessionProvider } from './context/session';
 
 if (!window.matchMedia) {
   // undefined when running jest tests
@@ -52,11 +53,13 @@ const App = () => {
   return (
     <React.StrictMode>
       <Grommet theme={theme} themeMode={themeMode} full>
-        <HashRouter>
-          <ResponsiveProvider>
-            <MenuApp themeMode={themeMode} toggleThemeMode={toggleThemeMode} />
-          </ResponsiveProvider>
-        </HashRouter>
+        <SessionProvider>
+          <HashRouter>
+            <ResponsiveProvider>
+              <MenuApp themeMode={themeMode} toggleThemeMode={toggleThemeMode} />
+            </ResponsiveProvider>
+          </HashRouter>
+        </SessionProvider>
       </Grommet>
     </React.StrictMode>
   );

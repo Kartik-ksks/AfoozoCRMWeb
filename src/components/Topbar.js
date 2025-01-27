@@ -1,12 +1,44 @@
 import React, { useContext, useState } from 'react';
-import { Box, Button, DropButton, Header, Menu, Text } from 'grommet';
-import { Logout, Shop, Moon, Sun, User } from 'grommet-icons';
+import { Box, Button, DropButton, Header, Text } from 'grommet';
+import { Menu, Logout, Shop, Moon, Sun, User } from 'grommet-icons';
 import ProductText from './ProductText';
 import RoutedButton from './RoutedButton';
 import IconIndicator from './IconIndicator';
+import styled from 'styled-components';
 import { CartContext } from '../context/cart';
 
-const Topbar = ({ toggleThemeMode, themeMode, toggleCartLayer }) => {
+const StyledMenu = styled(Menu)`
+  transition: all 0.3s ease-in-out;
+  transform: ${(props) => `rotate(${props.begin})`};
+  transform: ${(props) => (props.toggle ? `rotate(${props.end})` : '')};
+`;
+
+const RotatingMenu = ({
+    begin,
+    end,
+    onClick,
+    startClicked,
+    ...rest
+}) => {
+    const [toggle, setToggle] = useState(false);
+
+    const handleClick = () => {
+        setToggle((p) => !p);
+        setTimeout(onClick); // callback
+    };
+
+    return (
+        <StyledMenu
+            toggle={toggle ? 1 : 0}
+            begin={startClicked ? end : begin}
+            end={startClicked ? begin : end}
+            onClick={handleClick}
+            {...rest}
+        />
+    );
+};
+
+const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, toggleCartLayer }) => {
     const { cart } = useContext(CartContext)
     const onLogout = () => {
         console.log('logout');
@@ -22,7 +54,28 @@ const Topbar = ({ toggleThemeMode, themeMode, toggleCartLayer }) => {
                 gap="small"
                 style={{ zIndex: '2' }}
             >
+                {/* Left section */}
                 <Box flex={false} direction="row" align="center">
+                    <Box
+                        margin={{ left: 'small', top: 'xsmall' }}
+                        flex={false}
+                        justify="center"
+                    >
+                        <Button
+                            icon={
+                                <Box pad="xsmall">
+                                    <RotatingMenu
+                                        data-id="id-topbar-sidebar-control"
+                                        a11yTitle="Toggle the sidebar"
+                                        begin="0deg"
+                                        end="90deg"
+                                        onClick={toggleSidebar}
+                                    />
+                                </Box>
+                            }
+                            onClick={toggleSidebar}
+                        />
+                    </Box>
                     <Header fill="horizontal">
                         <RoutedButton
                             data-id="id-header-home-button"
@@ -36,7 +89,7 @@ const Topbar = ({ toggleThemeMode, themeMode, toggleCartLayer }) => {
                                 margin={{ left: 'small', right: 'small' }}
                             >
                                 <Text>
-                                    Campus Canteen
+                                    Afoozo
                                 </Text>
                                 <Box overflow="visible" flex={false}>
                                     <ProductText weight="bold" />
@@ -51,7 +104,7 @@ const Topbar = ({ toggleThemeMode, themeMode, toggleCartLayer }) => {
                         onClick={toggleThemeMode}
                         icon={themeMode === 'light' ? <Moon /> : <Sun />}
                     />
-                    <Button
+                    {/* <Button
                         data-id="id-theme-mode"
                         onClick={toggleCartLayer}
                         icon={
@@ -60,7 +113,7 @@ const Topbar = ({ toggleThemeMode, themeMode, toggleCartLayer }) => {
                                 indicator={cart.length > 0}
                                 indicatorColor='status-ok'
                             />}
-                    />
+                    /> */}
                     <DropButton
                         data-id="id-topbar-menu-user"
                         a11yTitle="User menu"
@@ -75,7 +128,7 @@ const Topbar = ({ toggleThemeMode, themeMode, toggleCartLayer }) => {
                                 <Box border="bottom" pad={{ left: 'small', right: 'small' }}>
                                     <Text size="large">Kartik</Text>
                                     <Box direction="row" gap="xsmall">
-                                        <Text weight="bold">Role:</Text>
+                                        <Text weight="bold">number:</Text>
                                         <Text>7718945135</Text>
                                     </Box>
                                 </Box>
