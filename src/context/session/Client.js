@@ -141,10 +141,10 @@ class AfoozoClient {
       // The login worked! Save info about the created session.
       return res.json().then((json) => {
         this.initSession(
-          json?.Token,
-          json?.User?.Username,
-          json?.Users?.Email,
-          json?.User?.Role,
+          json?.token,
+          json?.user?.username,
+          json?.user?.email,
+          json?.user?.role,
         );
         res.json = () =>
           new Promise((resolve) => {
@@ -248,14 +248,6 @@ class AfoozoClient {
       );
     }
     return monitor;
-  };
-
-  devModePollMonitors = (poll) => {
-    if (poll)
-      this.monitors.forEach((mon) =>
-        mon.uris.forEach((uri) => this.get(uri, false)),
-      );
-    setTimeout(() => this.devModePollMonitors(poll), poll);
   };
 
   /**
@@ -520,9 +512,6 @@ class AfoozoClient {
       return res
         .json()
         .then((json) => {
-          if ('@odata.id' in json) {
-            this.addToResourceCache(uri, json);
-          }
           res.json = () =>
             new Promise((resolve) => {
               resolve(json);
@@ -628,12 +617,12 @@ class AfoozoClient {
     this.resourceCache = {};
     this.loadingCache = {};
     this.eventsFailed = false;
-    if (window.localStorage.getItem('sse-owner') === TAB_ID) {
-      window.localStorage.removeItem('sse-owner');
-    }
-    if (this.events) {
-      this.events.close();
-    }
+    // if (window.localStorage.getItem('sse-owner') === TAB_ID) {
+    //   window.localStorage.removeItem('sse-owner');
+    // }
+    // if (this.events) {
+    //   this.events.close();
+    // }
   };
 
   /**
@@ -670,20 +659,6 @@ class AfoozoClient {
         this.doMonitorCallbacksForUri(u);
       }
     });
-    // delete it from its cached collections too, if applicable
-    this.getParentUris(uri).forEach((collectionUri) => {
-      if (collectionUri in this.resourceCache) {
-        const collection = this.resourceCache[collectionUri].body;
-        if (collection.Members !== undefined) {
-          collection.Members = collection.Members.filter(
-            (link) => link['@odata.id'] !== uri,
-          );
-          collection['Members@odata.count'] = collection.Members.length;
-          collection['@odata.etag'] = null; // we no longer know the real value
-          this.addToResourceCache(collectionUri, collection);
-        }
-      }
-    });
   };
 
   /**
@@ -703,51 +678,6 @@ class AfoozoClient {
       etag,
     };
     this.doMonitorCallbacksForUri(uri);
-
-    if (uri.includes('?')) {
-      // Update cache with resources contained within this expanded collection.
-      // This doesn't work for any generic URI, but just for the ones we
-      // know we get through expansions, which are collections (with Members)
-      // and Storage (with Drives). If we want to make this work for anything,
-      // we'd lose some efficiency and require more thinking.
-      let Members = '';
-      if ('Members' in resource) {
-        Members = 'Members';
-      } else if ('Drives' in resource) {
-        Members = 'Drives';
-      } else if ('Slots' in resource) {
-        Members = 'Slots';
-      }
-      resource[Members].forEach((member) => {
-        this.resourceCache[member['@odata.id']] = {
-          etag: member['@odata.etag'],
-          body: member,
-        };
-        this.doMonitorCallbacksForUri(member['@odata.id']);
-      });
-    } else {
-      // Update cached expanded collection that contains this resource.
-      const expandedParentUri = this.getExpandedUri(this.getParentUri(uri));
-      if (expandedParentUri in this.resourceCache) {
-        const collection = this.resourceCache[expandedParentUri].body;
-        ['Members', 'Drives'].forEach((field) => {
-          if (collection[field] === undefined) return;
-          const foundIt = collection[field].some((member, idx) => {
-            if (member['@odata.id'] === uri) {
-              collection[field][idx] = resource;
-              return true;
-            }
-            return false;
-          });
-          if (!foundIt) {
-            collection[field].push(resource);
-            collection[`${field}@odata.count`] = collection[field].length;
-          }
-          this.resourceCache[expandedParentUri].body = collection;
-          this.doMonitorCallbacksForUri(expandedParentUri);
-        });
-      }
-    }
   };
 
   /**

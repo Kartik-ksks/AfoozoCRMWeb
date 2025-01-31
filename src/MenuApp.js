@@ -8,7 +8,7 @@ import { ResponsiveContext } from './context/responsive';
 // import { CartContext, CartProvider } from './context/cart';
 
 import { QLayer, Tile, Topbar } from './components';
-import { Home, Menus, Login, Accounts, Masters } from './pages';
+import { Home, Login, Masters, CategoryTable } from './pages';
 import { SessionContext } from './context/session';
 
 import { Sidebar } from './sidebar';
@@ -85,8 +85,6 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 />
                 <Box flex direction={isBreakSidebar() ? 'column-reverse' : 'row'}>
                     <Sidebar
-                        // settings={settings}
-                        // updateSettings={updateSettings}
                         showSidebar={showSidebar}
                         background="red!"
                         themeMode={themeMode}
@@ -97,7 +95,7 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                             <Route path="/" element={<Home />} />
                             <Route path="/masters/:master" element={<Masters />} />
                             <Route path="/masters" element={<Masters />} />
-                            {/* <Route path="/accounts" element={<Accounts />} /> */}
+                            <Route path="/site-categories" element={<CategoryTable />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                     </Box>

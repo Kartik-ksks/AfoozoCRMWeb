@@ -51,6 +51,9 @@ const theme = deepMerge(hpe, {
         }`,
     },
     breakpoints,
+    colors: {
+      brand: 'red',
+    }
   },
 });
 

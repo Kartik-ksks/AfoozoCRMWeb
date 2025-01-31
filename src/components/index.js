@@ -8,7 +8,7 @@ import LineSeparator from './LineSeperator';
 import { LoadingLayer } from './LoadingLayer';
 import { DataTableGroups, FilteredDataTable, SelectedDataTable } from './dataTable';
 import SaveAsMenu from './SaveAsMenu';
-
+import ConfirmOperation from './ConfirmOperation';
 export {
     QLayer,
     RoutedButton,
@@ -22,6 +22,7 @@ export {
     FilteredDataTable,
     SelectedDataTable,
     SaveAsMenu,
+    ConfirmOperation,
 };
 
 export * from './Tile';

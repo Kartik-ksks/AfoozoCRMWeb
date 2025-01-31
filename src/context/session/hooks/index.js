@@ -1,1 +1,2 @@
-export * from './useRedfishMonitor';
+import useMonitor from './useMonitor';
+export { useMonitor };

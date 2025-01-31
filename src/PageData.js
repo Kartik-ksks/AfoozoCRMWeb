@@ -82,13 +82,13 @@ const mainPageData = [
     ],
   },
   {
-    name: 'Accounts',
+    name: 'Site Category',
     Icon: Group,
     value: {
       // render: <AccountsSummary />,
     },
     color: 'violet',
-    path: 'accounts',
+    path: 'site-categories',
     // info: info.accounts,
   },
   // {

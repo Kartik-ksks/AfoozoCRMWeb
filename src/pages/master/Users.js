@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -14,113 +14,133 @@ import {
   Heading,
   Text,
   Toolbar,
+  Menu,
+  Layer,
 } from 'grommet';
 
 import { LoadingLayer } from '../../components';
 import { SessionContext } from '../../context/session';
-import { isNumeric, statusIcon } from '../../Utils';
+import { useMonitor } from '../../context/session/hooks';
 import { FilteredDataTable, DataTableGroups, SelectedDataTable } from '../../components/dataTable';
-import { MastersProvider } from './mastersContext';
+import { More, Edit, Trash } from 'grommet-icons';
 
 const UserTable = ({ title, uri }) => {
   const { client } = useContext(SessionContext);
   const [data, setData] = useState();
   const [columns, setColumns] = useState();
   const [loading, setLoading] = useState(true);
-  const [triggerReload, setTriggerReload] = useState(false);
   const [options, setOptions] = useState();
   const [properties, setProperties] = useState();
   const [selected, setSelected] = useState([]);
   const [displaySelected, setDisplaySelected] = useState(false);
   const [groupBy, setGroupBy] = useState();
+  const [editUser, setEditUser] = useState(null);
+  const [deleteUser, setDeleteUser] = useState(null);
 
-  useEffect(() => {
-    client.rawGet(uri).then((res) => {
-      if (res.status !== 200) {
-        console.log('ERROR: Failed to load.');
-        setData('ERROR: Failed to load.');
-        setLoading(false);
-      } else {
-        res.json().then((resJson) => {
-          setLoading(false);
-          setData(resJson);
+  useMonitor(
+    client,
+    [uri],
+    ({ [uri]: collection }) => {
+      if (!collection) return;
+      setLoading(false);
+      setData(collection);
 
-          const renderProperty = (datum, key) => {
-            switch (key) {
-              case 'CreatedDate':
-              case 'ModifiedDate':
-              case 'LastLoginDate':
-                return datum[key] && (
-                  <Text style={{ whiteSpace: 'nowrap' }}>{new Date(datum[key]).toLocaleString()}</Text>
-                );
-              case 'IsActive':
-                return datum[key] === "1" || datum[key] === true ? 'Active' : 'Inactive';
-              case 'Password':
-                return '••••••••';
-              case 'ResetToken':
-              case 'ResetTokenExpiry':
-                return datum[key] || '-';
-              default:
-                return datum[key];
-            }
-          };
+      const renderProperty = (datum, key) => {
+        switch (key) {
+          case 'CreatedDate':
+          case 'LastLoginDate':
+            return datum[key] && (
+              <Text style={{ whiteSpace: 'nowrap' }}>
+                {new Date(datum[key]).toLocaleString()}
+              </Text>
+            );
+          case 'IsActive':
+            return datum[key] === 1 ? 'Active' : 'Inactive';
+          case 'Password':
+            return '••••••••';
+          default:
+            return datum[key];
+        }
+      };
 
-          // Update DataFilters section
-          const dataProperties = {
-            UserId: { label: 'User ID', search: true },
-            Username: { label: 'Username', search: true },
-            Email: { label: 'Email', search: true },
-            Role: { label: 'Role', search: true },
-            IsActive: { label: 'Status', search: true },
-            CreatedDate: { label: 'Created Date', search: true },
-            ModifiedDate: { label: 'Modified Date', search: true },
-            LastLoginDate: { label: 'Last Login', search: true },
-            FailedLoginAttempts: { label: 'Failed Attempts', search: true },
-          };
-          setProperties(dataProperties);
+      const dataProperties = {
+        UserId: { label: 'User ID', search: true },
+        Username: { label: 'Username', search: true },
+        Email: { label: 'Email', search: true },
+        Role: { label: 'Role', search: true },
+        IsActive: { label: 'Status', search: true },
+        CreatedDate: { label: 'Created Date', search: true },
+        LastLoginDate: { label: 'Last Login', search: true },
+      };
+      setProperties(dataProperties);
 
-          const cols = [
-            { property: 'UserId', header: 'User ID', primary: true },
-            { property: 'Username', header: 'Username' },
-            { property: 'Email', header: 'Email' },
-            { property: 'Role', header: 'Role' },
-            { property: 'IsActive', header: 'Status' },
-            { property: 'CreatedDate', header: 'Created Date' },
-            { property: 'ModifiedDate', header: 'Modified Date' },
-            { property: 'LastLoginDate', header: 'Last Login' },
-            { property: 'FailedLoginAttempts', header: 'Failed Attempts' },
-          ].map(col => ({
-            ...col,
-            render: (datum) => renderProperty(datum, col.property),
-          }));
+      const cols = [
+        { property: 'UserId', header: 'User ID', primary: true },
+        { property: 'Username', header: 'Username' },
+        { property: 'Email', header: 'Email' },
+        { property: 'Role', header: 'Role' },
+        { property: 'IsActive', header: 'Status' },
+        { property: 'CreatedDate', header: 'Created Date' },
+        { property: 'LastLoginDate', header: 'Last Login' },
+        {
+          property: 'actions',
+          header: 'Actions',
+          render: (datum) => (
+            <Menu
+              icon={<More />}
+              hoverIndicator
+              items={[
+                {
+                  label: 'Edit',
+                  icon: <Edit />,
+                  onClick: () => setEditUser(datum),
+                  disabled: datum.Role !== 'admin' && datum.Role !== 'Admin'
+                },
+                {
+                  label: 'Delete',
+                  icon: <Trash />,
+                  onClick: () => setDeleteUser(datum),
+                  disabled: datum.Role !== 'admin' && datum.Role !== 'Admin'
+                }
+              ]}
+            />
+          ),
+        }
+      ].map(col => ({
+        ...col,
+        render: col.property === 'actions' ?
+          col.render :
+          (datum) => renderProperty(datum, col.property),
+      }));
 
-          setColumns(cols);
-          setOptions(cols.map(({ property, header }) => ({
-            property,
-            label: header,
-          })));
-        })
-          .catch(() => {
-            setLoading(false);
-            console.warn('ERROR: Failed to parse or error in "then" block.');
-          });
-      }
-    });
-  }, [client, triggerReload, uri]);
+      setColumns(cols);
+      setOptions(cols.filter(col => col.property !== 'actions').map(({ property, header }) => ({
+        property,
+        label: header,
+      })));
+    },
+    [setData, setLoading, setColumns, setOptions, setProperties]
+  );
 
-  const handleReload = () => {
-    setTriggerReload((prev) => !prev);
-    setLoading(true);
+  // Add handlers for edit and delete actions
+  const handleEdit = (user) => {
+    // Implement edit logic
+    console.log('Edit user:', user);
+    setEditUser(null);
   };
 
-  const id = title.replaceAll(' ', '-');
+  const handleDelete = (user) => {
+    // Implement delete logic
+    console.log('Delete user:', user);
+    setDeleteUser(null);
+  };
 
   return (
     <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
       {loading && <LoadingLayer />}
       {displaySelected && selected?.length !== 0 && (
         <SelectedDataTable
-          title="Selected Integrated Events"
+          title="Selected Users"
           data={data.filter((datum) => selected.includes(datum.UserId))}
           columns={columns}
           onClose={() => setDisplaySelected(false)}
@@ -134,7 +154,7 @@ const UserTable = ({ title, uri }) => {
           gap="small"
           margin={{ top: 'medium', bottom: 'large' }}
         >
-          <Heading id={id} level={2}>
+          <Heading id='idUsers-table' level={5}>
             {title}
           </Heading>
           <Box direction="row" gap="small" flex={false}>
@@ -143,7 +163,7 @@ const UserTable = ({ title, uri }) => {
               label="View Raw Log"
               onClick={() => setShowRawLog(true)}
             /> */}
-            <Button primary label="Reload" onClick={handleReload} />
+            <Button primary label="Reload" onClick={() => setLoading(true)} />
           </Box>
         </Box>
       </Box>
@@ -155,7 +175,7 @@ const UserTable = ({ title, uri }) => {
           >
             <Data data={data} properties={properties}>
               <Toolbar align="center" gap="medium">
-                <DataSearch responsive placeholder="Search events" />
+                <DataSearch responsive placeholder="Search users" />
                 <DataTableGroups
                   groups={options.filter(
                     (option) =>
@@ -176,14 +196,13 @@ const UserTable = ({ title, uri }) => {
                   <DataFilter property="Username" />
                   <DataFilter property="Email" />
                   <DataFilter property="Role" />
-                  <DataFilter property="IsActive" options={[
-                    { label: 'Active', value: "1" },
-                    { label: 'Inactive', value: "0" },
-                  ]} />
+                  <DataFilter property="IsActive"
+                    options={[
+                      { label: 'Active', value: 1 },
+                      { label: 'Inactive', value: 0 },
+                    ]} />
                   <DataFilter property="CreatedDate" />
-                  <DataFilter property="ModifiedDate" />
                   <DataFilter property="LastLoginDate" />
-                  <DataFilter property="FailedLoginAttempts" />
                 </DataFilters>
                 {/* Flex Box added for spacing between Button */}
                 <Box flex />
@@ -212,7 +231,7 @@ const UserTable = ({ title, uri }) => {
               </Box>
               {columns && (
                 <FilteredDataTable
-                  describedBy={id}
+                  describedBy='idUsers-table'
                   columns={columns}
                   selected={selected}
                   setSelected={setSelected}
@@ -222,6 +241,46 @@ const UserTable = ({ title, uri }) => {
             </Data>
           </Grid>
         </Box>
+      )}
+
+      {editUser && (
+        <Layer
+          position="center"
+          onClickOutside={() => setEditUser(null)}
+          onEsc={() => setEditUser(null)}
+        >
+          <Box pad="medium" gap="small" width="medium">
+            <Heading level={3} margin="none">
+              Edit User
+            </Heading>
+            {/* Add your edit form here */}
+            <Button label="Close" onClick={() => setEditUser(null)} />
+          </Box>
+        </Layer>
+      )}
+
+      {deleteUser && (
+        <Layer
+          position="center"
+          onClickOutside={() => setDeleteUser(null)}
+          onEsc={() => setDeleteUser(null)}
+        >
+          <Box pad="medium" gap="small" width="medium">
+            <Heading level={3} margin="none">
+              Confirm Delete
+            </Heading>
+            <Text>Are you sure you want to delete {deleteUser.Username}?</Text>
+            <Box direction="row" gap="small" justify="end">
+              <Button label="Cancel" onClick={() => setDeleteUser(null)} />
+              <Button
+                primary
+                color="status-critical"
+                label="Delete"
+                onClick={() => handleDelete(deleteUser)}
+              />
+            </Box>
+          </Box>
+        </Layer>
       )}
     </Box>
   );

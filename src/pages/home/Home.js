@@ -16,29 +16,31 @@ const Home = () => {
             margin={{ left: 'medium', top: 'small', right: 'small' }}
             align="left"
         >
-            <Grid columns="small" gap="small">
-                <InfiniteScroll items={homeCards}>
-                    {(card) => (
-                        <Tile key={card.name}>
-                            <RoutedButton path={`/${card.path}/overview`} fill>
-                                <Box direction="row" gap="small">
-                                    {card.Icon && <card.Icon />}
-                                    <Text>
-                                        <strong>{card.name}</strong>
-                                    </Text>
-                                </Box>
-                                {card.description && (
-                                    <Box direction="row" justify="center" gap="xsmall">
-                                        {card.description && (
-                                            <Text size="small">{card.description}</Text>
-                                        )}
+            <CoverPage title="Home" >
+                <Grid columns="small" gap="small">
+                    <InfiniteScroll items={homeCards}>
+                        {(card) => (
+                            <Tile key={card.name}>
+                                <RoutedButton path={`/${card.path}/overview`} fill>
+                                    <Box direction="row" gap="small">
+                                        {card.Icon && <card.Icon />}
+                                        <Text>
+                                            <strong>{card.name}</strong>
+                                        </Text>
                                     </Box>
-                                )}
-                            </RoutedButton>
-                        </Tile>
-                    )}
-                </InfiniteScroll>
-            </Grid>
+                                    {card.description && (
+                                        <Box direction="row" justify="center" gap="xsmall">
+                                            {card.description && (
+                                                <Text size="small">{card.description}</Text>
+                                            )}
+                                        </Box>
+                                    )}
+                                </RoutedButton>
+                            </Tile>
+                        )}
+                    </InfiniteScroll>
+                </Grid>
+            </CoverPage>
         </Box>
     );
 };

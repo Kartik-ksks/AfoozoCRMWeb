@@ -2,9 +2,14 @@ import React from 'react';
 import { Box, Heading, Markdown, Paragraph, Text } from 'grommet';
 import { useParams } from 'react-router-dom';
 
-import { RoutedTabs } from '../../components';
+import { CoverPage, RoutedTabs } from '../../components';
 // import { InfoBox } from '../../info';
 import Users from './Users';
+import { SiteTable } from './sites';
+
+
+const UsersUri = '/api/users';
+const SitesUri = '/api/sites';
 
 const Masters = () => {
   const { master } = useParams();
@@ -13,17 +18,8 @@ const Masters = () => {
     <Box align="center" pad="small" gap="small">
       <Heading level="2">Overview of Masters</Heading>
       <Paragraph margin={{ top: 'none', bottom: 'none' }}>
-        Select a log file from the tabs above. The selected log file will be
-        displayed in this browser window for you to examine and search through.
+        Manage users and roles from the tabs above.
       </Paragraph>
-      {/* <InfoBox
-        content={
-          <Text>
-            To access other logs, use the RMC Command:
-            <Markdown>* `help show logs`</Markdown>
-          </Text>
-        }
-      /> */}
     </Box>
   );
 
@@ -35,27 +31,39 @@ const Masters = () => {
 
   return (
     <Box fill>
-      <RoutedTabs
-        path="/masters"
-        selected={master || ''}
-        items={[
-          {
-            key: '',
-            title: renderTabTitle('Overview'),
-            children: renderDefaultTab(),
-          },
-          {
-            key: 'users',
-            title: renderTabTitle('Users'),
-            children: (
-              <Users
-                title="Users"
-                uri="/api/users/all-users"
-              />
-            ),
-          },
-        ]}
-      />
+      <CoverPage title="Masters">
+        <RoutedTabs
+          path="/masters"
+          selected={master || ''}
+          items={[
+            {
+              key: '',
+              title: renderTabTitle('Overview'),
+              children: renderDefaultTab(),
+            },
+            {
+              key: 'users',
+              title: renderTabTitle('Users'),
+              children: (
+                <Users
+                  title={renderTabTitle('Users')}
+                  uri={UsersUri}
+                />
+              ),
+            },
+            {
+              key: 'sites',
+              title: renderTabTitle('Sites'),
+              children: (
+                <SiteTable
+                  title={renderTabTitle('Sites')}
+                  uri={SitesUri} />
+              )
+            },
+          ]}
+        />
+      </CoverPage>
+
     </Box>
   );
 };

@@ -184,6 +184,18 @@ const statusIcon = (level) =>
   );
 /* eslint-enable no-nested-ternary */
 
+export const UseMonitorResponseMessage = (res, extBaseHdlr) =>
+  res.status === 204 || res.status === 201
+    ? // Type of success response with no explicit message in the body
+    [{ health: 'OK', msg: 'Success!' }]
+    : res
+      .json()
+      .then((json) => json.Error)
+      // Response body isn't JSON, so we can't explain the failure.
+      .catch(() => [
+        { health: 'Critical', msg: 'An internal error occurred.' },
+      ]);
+
 export {
   arraysEqual,
   camel2Title,

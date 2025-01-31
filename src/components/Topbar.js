@@ -6,6 +6,7 @@ import RoutedButton from './RoutedButton';
 import IconIndicator from './IconIndicator';
 import styled from 'styled-components';
 import { CartContext } from '../context/cart';
+import { SessionContext } from '../context/session';
 
 const StyledMenu = styled(Menu)`
   transition: all 0.3s ease-in-out;
@@ -39,9 +40,10 @@ const RotatingMenu = ({
 };
 
 const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, toggleCartLayer }) => {
-    const { cart } = useContext(CartContext)
+    const { cart } = useContext(CartContext);
+    const { client } = useContext(SessionContext);
     const onLogout = () => {
-        console.log('logout');
+        client.logout();
     };
     return (
         <>
