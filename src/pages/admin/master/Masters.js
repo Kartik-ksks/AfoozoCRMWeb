@@ -2,11 +2,13 @@ import React from 'react';
 import { Box, Heading, Markdown, Paragraph, Text } from 'grommet';
 import { useParams } from 'react-router-dom';
 
-import { CoverPage, RoutedTabs } from '../../components';
+import { CoverPage, RoutedTabs } from '../../../components';
 // import { InfoBox } from '../../info';
+
 import Users from './Users';
 import { SiteTable } from './sites';
-
+import { CategoryTable } from './sitecategories';
+import { QuestionsTable } from './siteQuestions';
 
 const UsersUri = '/api/users';
 const SitesUri = '/api/sites';
@@ -52,6 +54,15 @@ const Masters = () => {
               ),
             },
             {
+              key: 'site-categories',
+              title: renderTabTitle('Site Categories'),
+              children: (
+                <CategoryTable
+                  title='Site Categories'
+                  uri={SitesUri} />
+              )
+            },
+            {
               key: 'sites',
               title: renderTabTitle('Sites'),
               children: (
@@ -60,10 +71,19 @@ const Masters = () => {
                   uri={SitesUri} />
               )
             },
+            {
+              key: 'site-questions',
+              title: renderTabTitle('Site Questions'),
+              children: (
+                <QuestionsTable
+                  title={renderTabTitle('Site Questions')}
+                  uri={SitesUri} />
+              )
+
+            },
           ]}
         />
       </CoverPage>
-
     </Box>
   );
 };

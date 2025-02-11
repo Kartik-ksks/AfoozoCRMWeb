@@ -21,7 +21,7 @@ import React, {
     fill, // Box fill property for the UI
     onComplete, // Function. On completion, whether due to success or failure.
     onSuccess, // Function. On completion only on success.
-    onFail, // Function. On completion only if failure.
+    // onFail, // Function. On completion only if failure.
     monitorToMessages, // Function. Convert task monitor to strings.
   }) => {
     const { client } = useContext(SessionContext);
@@ -88,9 +88,10 @@ import React, {
         onComplete();
         if (status === 'ok') {
           onSuccess();
-        } else {
-          onFail();
         }
+        // } else {
+        //   onFail();
+        // }
       }
       // omit callback props; don't trust parent to memoize their functions
     }, [completed, status]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -351,7 +352,7 @@ import React, {
     fill: PropTypes.oneOf(['horizontal', false]),
     onComplete: PropTypes.func,
     onSuccess: PropTypes.func,
-    onFail: PropTypes.func,
+    // onFail: PropTypes.func,
     monitorToMessages: PropTypes.func,
   };
 
@@ -362,7 +363,7 @@ import React, {
     promise: null,
     onComplete: () => {},
     onSuccess: () => {},
-    onFail: () => {},
+    // onFail: () => {},
     monitorToMessages: (res) => UseMonitorResponseMessage(res),
   };
 

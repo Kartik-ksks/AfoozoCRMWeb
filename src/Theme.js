@@ -49,11 +49,20 @@ const theme = deepMerge(hpe, {
           src: url("/fonts/MetricHPE-Web-Light.woff2") format('woff2');
           font-weight: 100;
         }`,
+      size: '15px',
+      height: '20px',
     },
     breakpoints,
     colors: {
-      brand: 'red',
+      brand: '#B23A48',          // Deeper red for brand
+      'brand-contrast': '#FFFFFF',
+      'neutral-1': '#2C3E50',    // Dark blue-gray
     }
+  },
+  button: {
+    hover: {
+      background: { color: 'rgba(255, 255, 255, 0.1)' },
+    },
   },
 });
 

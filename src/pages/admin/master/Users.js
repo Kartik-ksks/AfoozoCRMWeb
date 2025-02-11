@@ -1,6 +1,5 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-
 import {
   Box,
   Button,
@@ -16,13 +15,20 @@ import {
   Toolbar,
   Menu,
   Layer,
+  Form,
+  FormField,
+  TextInput,
+  Select,
+  CheckBoxGroup,
+  SelectMultiple,
 } from 'grommet';
-
-import { LoadingLayer } from '../../components';
-import { SessionContext } from '../../context/session';
-import { useMonitor } from '../../context/session/hooks';
-import { FilteredDataTable, DataTableGroups, SelectedDataTable } from '../../components/dataTable';
 import { More, Edit, Trash } from 'grommet-icons';
+import { ConfirmOperation, LoadingLayer, QLayer } from '../../../components';
+import { SessionContext } from '../../../context/session';
+import { useMonitor } from '../../../context/session/hooks';
+import { FilteredDataTable, DataTableGroups, SelectedDataTable } from '../../../components/dataTable';
+
+const ROLES = ['admin', 'manager', 'user'];
 
 const UserTable = ({ title, uri }) => {
   const { client } = useContext(SessionContext);
@@ -34,8 +40,33 @@ const UserTable = ({ title, uri }) => {
   const [selected, setSelected] = useState([]);
   const [displaySelected, setDisplaySelected] = useState(false);
   const [groupBy, setGroupBy] = useState();
+  const [addUser, setAddUser] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formValues, setFormValues] = useState({
+    Username: '',
+    Email: '',
+    Password: '',
+    Role: 'user',
+    SiteIds: [],
+  });
+  const [sites, setSites] = useState([]);
+
+  useMonitor(
+    client,
+    ['/api/sites'],
+    ({ ['/api/sites']: sites }) => {
+      if (sites) {
+        setSites(sites.map(site => ({
+          label: site.SiteName,
+          value: site.SiteId.toString(),
+        })));
+        setLoading(false);
+      }
+    }
+  );
 
   useMonitor(
     client,
@@ -122,18 +153,62 @@ const UserTable = ({ title, uri }) => {
     [setData, setLoading, setColumns, setOptions, setProperties]
   );
 
-  // Add handlers for edit and delete actions
-  const handleEdit = (user) => {
-    // Implement edit logic
-    console.log('Edit user:', user);
-    setEditUser(null);
-  };
+  const formContent = (
+    <Form value={formValues} onChange={setFormValues}>
+      <Box gap="medium">
+        <FormField
+          name="Username"
+          label="Username"
+          required
+        >
+          <TextInput name="Username" />
+        </FormField>
 
-  const handleDelete = (user) => {
-    // Implement delete logic
-    console.log('Delete user:', user);
-    setDeleteUser(null);
-  };
+        <FormField
+          name="Email"
+          label="Email"
+          required
+        >
+          <TextInput name="Email" type="email" />
+        </FormField>
+
+        <FormField
+          name="Password"
+          label={editUser ? "New Password (leave blank to keep current)" : "Password"}
+          required={!editUser}
+        >
+          <TextInput name="Password" type="password" />
+        </FormField>
+
+        <FormField
+          name="Role"
+          label="Role"
+          required
+        >
+          <Select
+            name="Role"
+            options={ROLES}
+          />
+        </FormField>
+
+        <FormField
+          name="SiteIds"
+          label="Sites"
+        >
+          <SelectMultiple
+            name="SiteIds"
+            closeOnChange={false}
+            placeholder="Select sites"
+            options={sites}
+            onChange={({ value }) => setFormValues(prev => ({ ...prev, SiteIds: value }))}
+            labelKey="label"
+            valueKey={{ key: "value", reduce: true }}
+            value={formValues.SiteIds}
+          />
+        </FormField>
+      </Box>
+    </Form>
+  );
 
   return (
     <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
@@ -158,19 +233,18 @@ const UserTable = ({ title, uri }) => {
             {title}
           </Heading>
           <Box direction="row" gap="small" flex={false}>
-            {/* <Button
-              secondary
-              label="View Raw Log"
-              onClick={() => setShowRawLog(true)}
-            /> */}
-            <Button primary label="Reload" onClick={() => setLoading(true)} />
+            <Button
+              primary
+              color="status-critical"
+              label="Add User"
+              onClick={() => setAddUser(true)}
+            />
           </Box>
         </Box>
       </Box>
       {data && (
         <Box>
           <Grid
-            // Use Grid with height for sticky header and scrollable results
             height={{ min: 'medium' }}
           >
             <Data data={data} properties={properties}>
@@ -179,7 +253,6 @@ const UserTable = ({ title, uri }) => {
                 <DataTableGroups
                   groups={options.filter(
                     (option) =>
-                      // Bug: 'level' has 0 values, see Grommet issue #6744
                       !['UserId', 'status', 'level'].includes(option.property),
                   )}
                   setGroupBy={setGroupBy}
@@ -204,7 +277,6 @@ const UserTable = ({ title, uri }) => {
                   <DataFilter property="CreatedDate" />
                   <DataFilter property="LastLoginDate" />
                 </DataFilters>
-                {/* Flex Box added for spacing between Button */}
                 <Box flex />
                 <Box direction="row" gap="small" flex={false}>
                   {selected?.length !== 0 && (
@@ -214,6 +286,7 @@ const UserTable = ({ title, uri }) => {
                       onClick={() => setSelected([])}
                     />
                   )}
+                  <Button secondary color="status-critical" label="Reload" onClick={() => setLoading(true)} />
                   <Button
                     secondary
                     label="Display Selected"
@@ -243,44 +316,72 @@ const UserTable = ({ title, uri }) => {
         </Box>
       )}
 
+      {addUser && (
+        <ConfirmOperation
+          onClose={() => {
+            setAddUser(false);
+            setFormValues({
+              Username: '',
+              Email: '',
+              Password: '',
+              Role: 'user',
+              SiteIds: [],
+            });
+          }}
+          title="Add New User"
+          onConfirm={() => client.post('/api/auth/register', formValues)}
+          yesPrompt="Add User"
+          noPrompt="Cancel"
+          estimatedTime={5}
+          text={formContent}
+          onSuccess={() => {
+            setLoading(true);
+            setAddUser(false);
+          }}
+          progressLabel={`Adding user ${formValues.Username}...`}
+        />
+
+      )}
+
       {editUser && (
-        <Layer
-          position="center"
-          onClickOutside={() => setEditUser(null)}
-          onEsc={() => setEditUser(null)}
-        >
-          <Box pad="medium" gap="small" width="medium">
-            <Heading level={3} margin="none">
-              Edit User
-            </Heading>
-            {/* Add your edit form here */}
-            <Button label="Close" onClick={() => setEditUser(null)} />
-          </Box>
-        </Layer>
+        <ConfirmOperation
+          onClose={() => {
+            setEditUser(null);
+            setFormValues({
+              Username: '',
+              Email: '',
+              Password: '',
+              Role: 'user',
+              SiteIds: [],
+            });
+          }}
+          title="Edit User"
+          onConfirm={() => {
+            const updateData = { ...formValues };
+            if (!updateData.Password) {
+              delete updateData.Password;
+            }
+            return client.put(`/api/users/${editUser.UserId}`, updateData);
+          }}
+          yesPrompt="Save Changes"
+          noPrompt="Cancel"
+          estimatedTime={5}
+          text={formContent}
+          onSuccess={() => setLoading(true)}
+        />
       )}
 
       {deleteUser && (
-        <Layer
-          position="center"
-          onClickOutside={() => setDeleteUser(null)}
-          onEsc={() => setDeleteUser(null)}
-        >
-          <Box pad="medium" gap="small" width="medium">
-            <Heading level={3} margin="none">
-              Confirm Delete
-            </Heading>
-            <Text>Are you sure you want to delete {deleteUser.Username}?</Text>
-            <Box direction="row" gap="small" justify="end">
-              <Button label="Cancel" onClick={() => setDeleteUser(null)} />
-              <Button
-                primary
-                color="status-critical"
-                label="Delete"
-                onClick={() => handleDelete(deleteUser)}
-              />
-            </Box>
-          </Box>
-        </Layer>
+        <ConfirmOperation
+          onClose={() => setDeleteUser(null)}
+          title="Delete User"
+          text={`Are you sure you want to delete user "${deleteUser.Username}"?`}
+          onConfirm={() => client.delete(`/api/users/${deleteUser.UserId}`)}
+          yesPrompt="Delete"
+          noPrompt="Cancel"
+          estimatedTime={5}
+          onSuccess={() => setLoading(true)}
+        />
       )}
     </Box>
   );

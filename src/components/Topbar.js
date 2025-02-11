@@ -3,9 +3,7 @@ import { Box, Button, DropButton, Header, Text } from 'grommet';
 import { Menu, Logout, Shop, Moon, Sun, User } from 'grommet-icons';
 import ProductText from './ProductText';
 import RoutedButton from './RoutedButton';
-import IconIndicator from './IconIndicator';
 import styled from 'styled-components';
-import { CartContext } from '../context/cart';
 import { SessionContext } from '../context/session';
 
 const StyledMenu = styled(Menu)`
@@ -39,11 +37,10 @@ const RotatingMenu = ({
     );
 };
 
-const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, toggleCartLayer }) => {
-    const { cart } = useContext(CartContext);
+const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, handleLogout }) => {
     const { client } = useContext(SessionContext);
     const onLogout = () => {
-        client.logout();
+        handleLogout();
     };
     return (
         <>
@@ -106,16 +103,6 @@ const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, toggleCartLayer }) 
                         onClick={toggleThemeMode}
                         icon={themeMode === 'light' ? <Moon /> : <Sun />}
                     />
-                    {/* <Button
-                        data-id="id-theme-mode"
-                        onClick={toggleCartLayer}
-                        icon={
-                            <IconIndicator
-                                icon={Shop}
-                                indicator={cart.length > 0}
-                                indicatorColor='status-ok'
-                            />}
-                    /> */}
                     <DropButton
                         data-id="id-topbar-menu-user"
                         a11yTitle="User menu"
@@ -128,10 +115,14 @@ const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, toggleCartLayer }) 
                         dropContent={
                             <Box align="start">
                                 <Box border="bottom" pad={{ left: 'small', right: 'small' }}>
-                                    <Text size="large">Kartik</Text>
+                                    <Text size="large">{client.session.username}</Text>
                                     <Box direction="row" gap="xsmall">
-                                        <Text weight="bold">number:</Text>
-                                        <Text>7718945135</Text>
+                                        <Text weight="bold">Role:</Text>
+                                        <Text>{client.session.role}</Text>
+                                    </Box>
+                                    <Box direction="row" gap="xsmall">
+                                        <Text weight="bold">Email:</Text>
+                                        <Text>{client.session.email}</Text>
                                     </Box>
                                 </Box>
                                 <Button

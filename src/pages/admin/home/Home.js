@@ -1,8 +1,7 @@
 import React, { useContext } from 'react';
 import { Box, Grid, InfiniteScroll, Text } from 'grommet';
 
-import { CoverPage, RoutedButton, Tile } from '../../components';
-import { CartContext } from '../../context/cart';
+import { CoverPage, RoutedButton, Tile } from '../../../components';
 
 // eslint-disable-next-line react/prop-types
 const Home = () => {

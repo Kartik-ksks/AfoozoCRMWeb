@@ -7,7 +7,6 @@ import {
     DataFilter,
     DataFilters,
     DataSearch,
-    DataSummary,
     DataTableColumns,
     Grid,
     Heading,
@@ -16,19 +15,16 @@ import {
 } from 'grommet';
 import { Add, More, Edit, Trash } from 'grommet-icons';
 
-import { SessionContext, useMonitor } from '../../../context/session';
-import AddSite from './AddSite';
-import EditSite from './EditSite';
-import {
-    FilteredDataTable,
-    DataTableGroups,
-    LoadingLayer,
-    ConfirmOperation
-} from '../../../components';
-import { naturalSort } from '../../../Utils';
+import { CoverPage, LoadingLayer, TileBox, Tile } from '../../../../components';
+import { SessionContext, useMonitor } from '../../../../context/session';
+import { FilteredDataTable, DataTableGroups } from '../../../../components/dataTable';
+import AddCategory from './AddCategory';
+import EditCategory from './EditCategory';
+import { ConfirmOperation } from '../../../../components';
+import { naturalSort } from '../../../../Utils';
 
-
-const SiteTable = ({ title, uri }) => {
+const uri = '/api/site-categories';
+const CategoryTable = ({ title }) => {
     const { client } = useContext(SessionContext);
     const [data, setData] = useState();
     const [columns, setColumns] = useState();
@@ -36,8 +32,8 @@ const SiteTable = ({ title, uri }) => {
     const [options, setOptions] = useState();
     const [properties, setProperties] = useState();
     const [showAdd, setShowAdd] = useState(false);
-    const [editSite, setEditSite] = useState(null);
-    const [deleteSite, setDeleteSite] = useState(null);
+    const [editCategory, setEditCategory] = useState(null);
+    const [deleteCategory, setDeleteCategory] = useState(null);
     const [groupBy, setGroupBy] = useState();
 
     useMonitor(
@@ -47,8 +43,8 @@ const SiteTable = ({ title, uri }) => {
             if (!collection) return;
             setLoading(false);
 
-            // Sort collection by SiteId
-            const sortedData = naturalSort(collection, (item) => item.SiteId);
+            // Sort collection by CategoryId
+            const sortedData = naturalSort(collection, (item) => item.CategoryId);
             setData(sortedData);
 
             const renderProperty = (datum, key) => {
@@ -61,23 +57,21 @@ const SiteTable = ({ title, uri }) => {
             };
 
             const dataProperties = {
-                SiteId: { label: 'ID', search: true },
-                SiteName: { label: 'Site Name', search: true },
-                SiteType: { label: 'Site Type', search: true },
-                DisplayOrderNo: { label: 'Display Order No', search: true },
-                Details: { label: 'Details', search: true },
-                ContactPerson: { label: 'Contact Person', search: true },
-                IsActive: { label: 'Status', search: true },
+                CategoryId: { label: 'ID', search: true },
+                CategoryName: { label: 'Name', search: true, options: ['Name'] },
+                Description: { label: 'Description', search: true },
+                IsActive: {
+                    label: 'Status',
+                    search: true,
+                    options: ['Active', 'Inactive']
+                },
             };
             setProperties(dataProperties);
 
             const cols = [
-                { property: 'SiteId', header: 'ID', primary: true },
-                { property: 'SiteName', header: 'Site Name' },
-                { property: 'SiteType', header: 'Site Type' },
-                { property: 'DisplayOrderNo', header: 'Display Order No' },
-                { property: 'Details', header: 'Details' },
-                { property: 'ContactPerson', header: 'Contact Person' },
+                { property: 'CategoryId', header: 'ID', primary: true },
+                { property: 'CategoryName', header: 'Name' },
+                { property: 'Description', header: 'Description' },
                 { property: 'IsActive', header: 'Status' },
                 {
                     property: 'actions',
@@ -90,12 +84,12 @@ const SiteTable = ({ title, uri }) => {
                                 {
                                     label: 'Edit',
                                     icon: <Edit />,
-                                    onClick: () => setEditSite(datum),
+                                    onClick: () => setEditCategory(datum),
                                 },
                                 {
                                     label: 'Delete',
                                     icon: <Trash />,
-                                    onClick: () => setDeleteSite(datum),
+                                    onClick: () => setDeleteCategory(datum),
                                 }
                             ]}
                         />
@@ -123,6 +117,8 @@ const SiteTable = ({ title, uri }) => {
         ]
     );
 
+    const id = title.replaceAll(' ', '-');
+
     return (
         <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
             {loading && <LoadingLayer />}
@@ -134,19 +130,16 @@ const SiteTable = ({ title, uri }) => {
                     gap="small"
                     margin={{ top: 'medium', bottom: 'large' }}
                 >
-                    <Heading id='idSites-table' level={2}>
+                    <Heading id={id} level={2}>
                         {title}
                     </Heading>
-                    <Box direction="row" gap="small" flex={false}>
-                        <Button primary label="Reload" onClick={() => setLoading(true)} />
-                        <Button
-                            primary
-                            icon={<Add />}
-                            label="Add Site"
-                            onClick={() => setShowAdd(true)}
-                        />
-                    </Box>
-
+                    <Button
+                        primary
+                        color="status-critical"
+                        icon={<Add />}
+                        label="Add Category"
+                        onClick={() => setShowAdd(true)}
+                    />
                 </Box>
             </Box>
 
@@ -155,10 +148,10 @@ const SiteTable = ({ title, uri }) => {
                     <Grid height={{ min: 'medium' }}>
                         <Data data={data} properties={properties}>
                             <Toolbar align="center" gap="medium">
-                                <DataSearch responsive placeholder="Search sites" />
+                                <DataSearch responsive placeholder="Search categories" />
                                 <DataTableGroups
                                     groups={options?.filter(
-                                        (option) => ['SiteName', 'IsActive'].includes(option.property)
+                                        (option) => ['CategoryName', 'IsActive'].includes(option.property)
                                     )}
                                     setGroupBy={setGroupBy}
                                 />
@@ -168,9 +161,9 @@ const SiteTable = ({ title, uri }) => {
                                     options={options}
                                 />
                                 <DataFilters layer>
-                                    <DataFilter property="SiteId" />
-                                    <DataFilter property="SiteName" />
-                                    <DataFilter property="SiteType" />
+                                    <DataFilter property="CategoryId" />
+                                    <DataFilter property="CategoryName" />
+                                    <DataFilter property="Description" />
                                     <DataFilter property="IsActive" options={[
                                         { label: 'Active', value: 1 },
                                         { label: 'Inactive', value: 0 },
@@ -178,7 +171,7 @@ const SiteTable = ({ title, uri }) => {
                                 </DataFilters>
                             </Toolbar>
                             <FilteredDataTable
-                                describedBy='idSites-table'
+                                describedBy={id}
                                 columns={columns}
                                 groupBy={groupBy}
                             />
@@ -188,7 +181,7 @@ const SiteTable = ({ title, uri }) => {
             )}
 
             {showAdd && (
-                <AddSite
+                <AddCategory
                     onClose={() => setShowAdd(false)}
                     onSave={() => {
                         setShowAdd(false);
@@ -196,34 +189,34 @@ const SiteTable = ({ title, uri }) => {
                 />
             )}
 
-            {editSite && (
-                <EditSite
-                    site={editSite}
-                    onClose={() => setEditSite(null)}
+            {editCategory && (
+                <EditCategory
+                    category={editCategory}
+                    onClose={() => setEditCategory(null)}
                     onSave={() => {
-                        setEditSite(null);
+                        setEditCategory(null);
                     }}
                 />
             )}
 
-            {deleteSite && (
+            {deleteCategory && (
                 <ConfirmOperation
-                    title="Delete Site"
-                    text={`Are you sure you want to delete ${deleteSite.SiteName}?`}
-                    onClose={() => setDeleteSite(null)}
-                    onConfirm={() => client.delete(`${uri}/${deleteSite.SiteId}`)}
-                    yesPrompt="Yes, Delete"
+                    title="Delete Category"
+                    text={`Are you sure you want to delete ${deleteCategory.CategoryName}?`}
+                    onClose={() => setDeleteCategory(null)}
+                    onConfirm={() => client.delete(`${uri}/${deleteCategory.CategoryId}`)}
+                    yesPrompt="yes, Delete"
                     noPrompt="Cancel"
                     estimatedTime={5}
-                    onSuccess={() => setDeleteSite(null)}
+                    onSuccess={() => setDeleteCategory(null)}
                 />
             )}
         </Box>
     );
 };
 
-SiteTable.propTypes = {
+CategoryTable.propTypes = {
     title: PropTypes.string,
 };
 
-export default SiteTable;
+export default CategoryTable;

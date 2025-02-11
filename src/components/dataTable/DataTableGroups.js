@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 
 import { Select } from 'grommet';
 import { List } from 'grommet-icons';
-import { MastersContext } from '../../pages/master/mastersContext';
 
 const DataTableGroups = ({ groups, setGroupBy, ...rest }) => {
   return (

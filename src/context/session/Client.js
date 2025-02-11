@@ -96,11 +96,17 @@ class AfoozoClient {
    */
   restoreSession = () => {
     const token = config.sessionStorage.getItem('session-token');
-    const sessionUri = config.sessionStorage.getItem('session-uri');
-    const user = config.sessionStorage.getItem('session-user');
+    const username = config.sessionStorage.getItem('session-uri');
+    const email = config.sessionStorage.getItem('session-user');
     const role = config.sessionStorage.getItem('session-role');
-    if (token && sessionUri && user && role) {
-      this.initSession(token, sessionUri, user, role);
+
+    if (token && username && email && role) {
+      this.session = {
+        token,
+        username,
+        email,
+        role
+      };
       return true;
     }
     return false;
@@ -110,21 +116,32 @@ class AfoozoClient {
    * Asychronous check of whether a restored session still works.
    * Returns true if it works.
    */
-  testRestoredSession = () =>
-    this.get('/api/auth/me')
-      .then((json) => {
+  testRestoredSession = () => {
+    if (!this.session?.token) {
+      return Promise.resolve(false);
+    }
+
+    return fetch('/api/auth/me', {
+      headers: {
+        'Authorization': `Bearer ${this.session.token}`,
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Session invalid');
+        return res.json();
+      })
+      .then(json => {
         this.session.username = json.Username;
+        this.session.email = json.Email;
         this.session.role = json.Role;
-        // this.startEvents();
         return true;
       })
-      .catch(() => false)
-      .then((works) => {
-        if (!works) {
-          this.sessionExpired();
-        }
-        return works;
+      .catch(() => {
+        this.sessionExpired();
+        return false;
       });
+  };
 
   /**
    * This should be called before any other methods.
@@ -146,11 +163,16 @@ class AfoozoClient {
           json?.user?.email,
           json?.user?.role,
         );
-        res.json = () =>
-          new Promise((resolve) => {
-            resolve(json);
-          });
-        return res;
+        // Return the full response data
+        return {
+          status: res.status,
+          user: {
+            username: json?.user?.username,
+            email: json?.user?.email,
+            role: json?.user?.role
+          },
+          token: json?.token
+        };
       });
     });
   }
@@ -158,15 +180,38 @@ class AfoozoClient {
   /**
    * Delete the session created by login().
    */
-  logout() {
-    this.delete(this.session.token);
-    this.session = null;
-    this.rmSession();
-    this.onLogout();
-    this.onSessionExpired = () => { };
-    this.monitors.forEach((monitor) => this.rmMonitor(monitor));
-    clearTimeout(this.sseOwnerTimer);
-  }
+  logout = () => {
+    return fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.session ? this.session.token : null}`,
+      },
+    })
+      .then(() => {
+        // Clear session storage
+        config.sessionStorage.removeItem('session-token');
+        config.sessionStorage.removeItem('session-uri');
+        config.sessionStorage.removeItem('session-user');
+        config.sessionStorage.removeItem('session-role');
+
+        // Clear session data
+        this.session = null;
+
+        // Close event source if it exists
+        if (this.events) {
+          this.events.close();
+          this.events = undefined;
+        }
+
+        return true;
+      })
+      .catch((error) => {
+        console.error('Logout error:', error);
+        // Still clear local session data even if server request fails
+        this.session = null;
+        return false;
+      });
+  };
 
   /**
    * Called to inform that session has expired.
@@ -761,18 +806,21 @@ class AfoozoClient {
     });
   };
 
-  initSession = (token, sessionUri, username, role) => {
+  initSession(token, username, email, role) {
+    // Store in session storage
     config.sessionStorage.setItem('session-token', token);
-    config.sessionStorage.setItem('session-uri', sessionUri);
-    config.sessionStorage.setItem('session-user', username);
+    config.sessionStorage.setItem('session-uri', username);
+    config.sessionStorage.setItem('session-user', email);
     config.sessionStorage.setItem('session-role', role);
 
+    // Update client session
     this.session = {
       token,
-      role,
       username,
+      email,
+      role
     };
-  };
+  }
 
   /**
    * Do what it takes to start getting events. Either ensure another tab is the

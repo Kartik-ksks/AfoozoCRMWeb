@@ -1,10 +1,3 @@
-/**
- * CONFIDENTIAL (C) Copyright 2023 Hewlett Packard Enterprise Development LP
- *
- * Implement Logs Context.
- *
- */
-
 import React, { createContext, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 

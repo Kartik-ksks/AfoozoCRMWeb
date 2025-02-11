@@ -1,23 +1,25 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { Button, Text, Box } from 'grommet';
 
 import { DashboardProvider } from './context/dashboard';
 import { ResponsiveContext } from './context/responsive';
-// import { CartContext, CartProvider } from './context/cart';
-
-import { QLayer, Tile, Topbar } from './components';
-import { Home, Login, Masters, CategoryTable } from './pages';
 import { SessionContext } from './context/session';
 
 import { Sidebar } from './sidebar';
+
+import { Topbar } from './components';
+import { Login } from './pages';
 import { MenuProvider } from './context/menu';
 
 import { LoadingLayer } from './components/LoadingLayer';
+import { AdminRoutes, ManagerRoutes, UserRoutes } from './pages/routes';
+import getMenuDataForRole from './context/menu/menuData';
 
 
 const MenuApp = ({ themeMode, toggleThemeMode }) => {
+    const navigate = useNavigate();
     const {
         client,
         loggedIn,
@@ -26,9 +28,16 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
         sessionExpired,
         restoredSession,
         setRestoredSession,
+        userRole,
+        setUserRole,
     } = useContext(SessionContext);
     const { isBreakSidebar } = useContext(ResponsiveContext);
     const [showSidebar, setShowSidebar] = useState(true);
+    const [menuData, setMenuData] = useState([]);
+
+    const updateRole = useCallback(() => {
+        setUserRole(client.session.role);
+    }, [setUserRole]);
 
     useEffect(() => {
         if (restoredSession) {
@@ -36,13 +45,15 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 setRestoredSession(false);
                 return;
             }
-
             if (loggedIn === null) {
                 // If "logged in" via a restored session from localStorage, see if
                 // the session is still valid. If not, return to login screen.
                 client.testRestoredSession().then((works) => {
                     setLoggedIn(works);
                     setRestoredSession(false);
+                    if (works) {
+                        updateRole();
+                    }
                 });
             }
         }
@@ -60,11 +71,32 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
 
     const onLogin = (username, password) => {
         return client.login(username, password).then((res) => {
-            setLoggedIn(res.status === 200);
-            setSessionExpired(false);
+            if (res.status === 200) {
+                setLoggedIn(true);
+                setSessionExpired(false);
+                setUserRole(res.user.role);
+                const newMenuData = getMenuDataForRole(res.user.role);
+                setMenuData(newMenuData);
+                return res;
+            }
             return res;
+        }).catch(error => {
+            console.error('Login error:', error);
+            setLoggedIn(false);
+            setUserRole(null);
+            setMenuData([]);
+            return { status: 500, error };
         });
     };
+
+    const handleLogout = useCallback(() => {
+        client.logout().then(() => {
+            setLoggedIn(false);
+            setUserRole(null);
+            setMenuData([]);
+            navigate('/login');
+        });
+    }, [client, setLoggedIn, setUserRole, navigate]);
 
     let initDashboard = null;
     try {
@@ -74,6 +106,20 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
         window.localStorage.removeItem('dashboard');
     }
 
+    useEffect(() => {
+        if (client?.session?.role && !userRole) {
+            setUserRole(client.session.role);
+        }
+    }, [client, userRole]);
+
+    useEffect(() => {
+        if (userRole && !menuData.length) {
+            const newMenuData = getMenuDataForRole(userRole);
+            setMenuData(newMenuData);
+        }
+    }, [userRole, menuData.length]);
+
+
     const renderLoggedIn = () => {
         return (
             <>
@@ -82,8 +128,10 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                     toggleThemeMode={toggleThemeMode}
                     // toggleCartLayer={toggleCartLayer}
                     toggleSidebar={toggleSidebar}
+                    handleLogout={handleLogout}
                 />
                 <Box flex direction={isBreakSidebar() ? 'column-reverse' : 'row'}>
+
                     <Sidebar
                         showSidebar={showSidebar}
                         background="red!"
@@ -92,10 +140,9 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                     />
                     <Box flex overflow="auto">
                         <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/masters/:master" element={<Masters />} />
-                            <Route path="/masters" element={<Masters />} />
-                            <Route path="/site-categories" element={<CategoryTable />} />
+                            {userRole === "admin" && <Route path="/*" element={<AdminRoutes />} />}
+                            {userRole === "manager" && <Route path="/*" element={<ManagerRoutes />} />}
+                            {userRole === "user" && <Route path="/*" element={<UserRoutes />} />}
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                     </Box>
@@ -107,30 +154,25 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
     const renderContent = () => {
         return !loggedIn ? (
             <Routes>
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route
-                    path="/login"
-                    element={<Login onLogin={onLogin} />}
-                />
+                <Route path="/login" element={<Login onLogin={onLogin} />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
-        ) : (
+        ) : userRole ? (  // Ensure userRole exists before routing
             renderLoggedIn()
+        ) : (
+            <Navigate to="/login" replace />
         );
     };
-
     return (
         <DashboardProvider dashboard={initDashboard}>
-            <MenuProvider>
-                {/* <CartProvider> */}
-                    {loggedIn === null && restoredSession ? (
-                        <LoadingLayer />
-                    ) : (
-                        <Box data-id="id-indiTechCrm" fill overflow="auto">
-                            {renderContent()}
-                        </Box>
-                    )}
-                {/* </CartProvider> */}
+            <MenuProvider menuData={menuData}>
+                {loggedIn === null && restoredSession ? (
+                    <LoadingLayer />
+                ) : (
+                    <Box data-id="id-indiTechCrm" fill overflow="auto">
+                        {renderContent()}
+                    </Box>
+                )}
             </MenuProvider>
         </DashboardProvider>
     );

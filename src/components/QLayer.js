@@ -44,6 +44,8 @@ const QLayer = ({
           )}
           {!disableClose && (
             <Button
+              secondary
+              color="status-critical"
               alignSelf="center"
               icon={<Close />}
               onClick={tryClose}

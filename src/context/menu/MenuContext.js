@@ -1,32 +1,20 @@
-/**
- * CONFIDENTIAL (C) Copyright 2020-2021 Hewlett Packard Enterprise Development LP
- *
- * Implement a custom menu and make it available as Context.
- *
- * NOTE: The menu data structure is exported.
- */
-
 import React, { createContext, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import menus from './menuData';
 
-// window.menus = menus;
+export const Context = createContext({
+  menus: [],
+  lookupMenuItem: () => null,
+});
 
-export const Context = createContext({});
-Context.displayName = 'MenuContext'; // for devTools
+Context.displayName = 'MenuContext';
 
-export const Provider = (props) => {
-  // console.log('[MenuContext] Provider', props);
-
-  const { children } = props;
+export const Provider = ({ children, menuData }) => {
+  const processedMenus = Array.isArray(menuData) ? menuData : [];
 
   const searchRoute = useCallback((item, route) => {
-    // console.log('searchRoute:', item, { route });
-
     if (item.route?.toLowerCase() === route.toLowerCase()) return item;
     if (!item.items) return null;
 
-    // perform recursive search of items array
     let found = null;
     for (let idx = 0; !found && idx < item.items.length; idx += 1) {
       found = searchRoute(item.items[idx], route);
@@ -38,35 +26,36 @@ export const Provider = (props) => {
     (route) => {
       if (!route) return null;
       let found = null;
-      for (let menuIdx = 0; !found && menuIdx < menus.length; menuIdx += 1) {
-        found = searchRoute(menus[menuIdx], route);
+      for (let menuIdx = 0; !found && menuIdx < processedMenus.length; menuIdx += 1) {
+        found = searchRoute(processedMenus[menuIdx], route);
       }
       return found;
     },
-    [searchRoute],
+    [searchRoute, processedMenus],
   );
 
-  // Make the context object:
-  const providedContext = useMemo(
+  const value = useMemo(
     () => ({
+      menus: processedMenus,
       lookupMenuItem,
-      menus,
     }),
-    [lookupMenuItem],
+    [processedMenus, lookupMenuItem],
   );
 
-  // pass the value in provider and return
   return (
-    <Context.Provider value={providedContext}>{children}</Context.Provider>
+    <Context.Provider value={value}>
+      {children}
+    </Context.Provider>
   );
 };
 
 export const { Consumer } = Context;
 
 Provider.propTypes = {
-  children: PropTypes.node,
+  children: PropTypes.node.isRequired,
+  menuData: PropTypes.array,
 };
 
 Provider.defaultProps = {
-  children: null,
+  menuData: [],
 };

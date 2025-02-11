@@ -4,6 +4,7 @@ import React, {
     useMemo,
     useRef,
     useState,
+    useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 
@@ -12,22 +13,59 @@ import AfoozoClient from './Client';
 export const Context = createContext({});
 Context.displayName = 'SessionContext';
 
-// An immutable client, make it global
+// Create a single client instance
 const client = new AfoozoClient();
-const restored = client.restoreSession();
 
-export const Provider = ({ children = null }) => {
+export const Provider = ({ children }) => {
+    const [loggedIn, setLoggedIn] = useState(() => {
+        // Try to restore session on initial load
+        const restored = client.restoreSession();
+        return restored ? true : null;
+    });
+
+    const [sessionExpired, setSessionExpired] = useState(false);
+    const [restoredSession, setRestoredSession] = useState(() => {
+        return !!client.session;
+    });
+
+    const [userRole, setUserRole] = useState(() => {
+        return client.session?.role || null;
+    });
+
+    // Handle session restoration on mount
+    useEffect(() => {
+        if (restoredSession && loggedIn === null) {
+            client.testRestoredSession()
+                .then((works) => {
+                    setLoggedIn(works);
+                    setRestoredSession(false);
+                    if (works) {
+                        setUserRole(client.session.role);
+                    }
+                })
+                .catch(() => {
+                    setLoggedIn(false);
+                    setRestoredSession(false);
+                    setUserRole(null);
+                });
+        }
+    }, [restoredSession]);
+
+    // Handle session expiration
+    useEffect(() => {
+        client.onSessionExpired = () => {
+            setSessionExpired(true);
+            setLoggedIn(false);
+            setUserRole(null);
+        };
+    }, []);
+
     const INIT_USERROLE = 'Unknown';
-    const [userRole, setUserRole] = useState(INIT_USERROLE);
     const userRoleAssigned = useCallback(
         () => userRole !== INIT_USERROLE,
         [userRole],
     );
     const clearUserRole = () => setUserRole(INIT_USERROLE);
-
-    const [loggedIn, setLoggedIn] = useState(null);
-    const [restoredSession, setRestoredSession] = useState(restored);
-    const [sessionExpired, setSessionExpired] = useState(false);
 
     const providedContext = useMemo(
         () => ({
@@ -53,12 +91,14 @@ export const Provider = ({ children = null }) => {
     );
 
     return (
-        <Context.Provider value={providedContext}>{children}</Context.Provider>
+        <Context.Provider value={providedContext}>
+            {children}
+        </Context.Provider>
     );
 };
 
 export const { Consumer } = Context;
 
 Provider.propTypes = {
-    children: PropTypes.node,
+    children: PropTypes.node.isRequired,
 };

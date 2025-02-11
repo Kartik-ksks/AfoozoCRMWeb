@@ -32,8 +32,11 @@ const ConfirmOperation = ({
             ) : (
                 text
             )}
-            <Box direction="row-responsive" gap="medium" justify="end">
+            <Box direction="row-responsive" justify="end" pad={{ bottom: 'small', top: 'medium' }}>
+                <Button label={noPrompt}  color="status-critical" disabled={waiting} onClick={onClose} />
                 <Button
+                    primary
+                    color="status-critical"
                     label={yesPrompt}
                     disabled={waiting}
                     onClick={() => {
@@ -41,7 +44,6 @@ const ConfirmOperation = ({
                         setPromise(onConfirm());
                     }}
                 />
-                <Button label={noPrompt} primary disabled={waiting} onClick={onClose} />
             </Box>
             {promise && (
                 <OperationBar

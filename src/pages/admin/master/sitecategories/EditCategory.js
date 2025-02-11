@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -8,15 +8,15 @@ import {
   TextArea,
   CheckBox,
 } from 'grommet';
-import { ConfirmOperation } from '../../components';
-import { SessionContext } from '../../context/session';
+import { ConfirmOperation } from '../../../../components';
+import { SessionContext } from '../../../../context/session';
 
-const AddCategory = ({ onClose, onSave }) => {
+const EditCategory = ({ category, onClose, onSave }) => {
   const { client } = useContext(SessionContext);
   const [formValues, setFormValues] = useState({
-    CategoryName: '',
-    Description: '',
-    IsActive: 1,
+    CategoryName: category.CategoryName,
+    Description: category.Description,
+    IsActive: category.IsActive,
   });
 
   const formContent = (
@@ -52,9 +52,13 @@ const AddCategory = ({ onClose, onSave }) => {
 
   return (
     <ConfirmOperation
-      title="Add Category"
+      title="Edit Category"
       text={formContent}
-      onConfirm={() => client.post('/api/site-categories', formValues)}
+      onConfirm={() => client.put(`/api/site-categories/${category.CategoryId}`, {
+        CategoryName: formValues.CategoryName,
+        Description: formValues.Description,
+        IsActive: formValues.IsActive,
+      })}
       onClose={onClose}
       yesPrompt="Save"
       noPrompt="Cancel"
@@ -64,9 +68,15 @@ const AddCategory = ({ onClose, onSave }) => {
   );
 };
 
-AddCategory.propTypes = {
+EditCategory.propTypes = {
+  category: PropTypes.shape({
+    CategoryId: PropTypes.number.isRequired,
+    CategoryName: PropTypes.string.isRequired,
+    Description: PropTypes.string,
+    IsActive: PropTypes.number.isRequired,
+  }).isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
 };
 
-export default AddCategory;
+export default EditCategory;
