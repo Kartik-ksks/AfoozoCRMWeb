@@ -1,12 +1,15 @@
 import React from 'react';
-import { Box, Heading } from 'grommet';
+import { Box } from 'grommet';
+import { CoverPage } from '../../../components';
+import Summary from './Summary';
 
 const Home = () => {
   return (
-    <Box pad="medium">
-      <Heading level={2}>Manager Dashboard</Heading>
-      {/* Add manager-specific dashboard content */}
-    </Box>
+    <CoverPage title="Dashboard">
+      <Box pad="medium" gap="medium">
+        <Summary />
+      </Box>
+    </CoverPage>
   );
 };
 

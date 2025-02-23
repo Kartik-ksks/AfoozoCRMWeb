@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Box,
   Button,
+  Cards,
   Data,
   DataFilter,
   DataFilters,
@@ -21,30 +22,112 @@ import {
   Select,
   CheckBoxGroup,
   SelectMultiple,
+  Card,
+  CheckBox,
 } from 'grommet';
-import { More, Edit, Trash } from 'grommet-icons';
-import { ConfirmOperation, LoadingLayer, QLayer } from '../../../components';
-import { SessionContext } from '../../../context/session';
-import { useMonitor } from '../../../context/session/hooks';
+import { More, Edit, Trash, Search, Filter } from 'grommet-icons';
+import { ResponsiveContext } from 'grommet';
+import { ConfirmOperation, LoadingLayer, QLayer, CoverPage } from '../../../components';
+import { SessionContext, useMonitor } from '../../../context/session';
 import { FilteredDataTable, DataTableGroups, SelectedDataTable } from '../../../components/dataTable';
 
 const ROLES = ['admin', 'manager', 'user'];
 
-const UserTable = ({ title, uri }) => {
+const UserCard = ({ user, onEdit, onDelete }) => {
+  const breakpoint = useContext(ResponsiveContext);
+
+  return (
+    <Card elevation="small">
+      <Box pad="medium" gap="small">
+        <Box direction="row" justify="between" align="center">
+          <Box>
+            <Text weight="bold">{user.Username}</Text>
+            <Text size="small" color={user.IsActive === 1 ? "status-ok" : "status-unknown"}>
+              ● {user.IsActive === 1 ? 'Online' : 'Offline'}
+            </Text>
+          </Box>
+          <Menu
+            icon={<More />}
+            items={[
+              {
+                label: 'Edit',
+                icon: <Edit />,
+                onClick: () => onEdit(user),
+              },
+              {
+                label: 'Delete',
+                icon: <Trash />,
+                onClick: () => onDelete(user),
+              },
+            ]}
+          />
+        </Box>
+        <Box gap="xsmall">
+          <Text size="small" color="dark-3">{user.Email}</Text>
+          <Text size="small">Role: {user.Role}</Text>
+          <Text size="small" color="dark-4">{user.SiteIds.join(', ')}</Text>
+        </Box>
+      </Box>
+    </Card>
+  );
+};
+
+const FilterLayer = ({ onClose, filters, setFilters }) => (
+  <Layer position="right" onClickOutside={onClose} onEsc={onClose}>
+    <Box pad="medium" gap="medium" width="medium">
+      <Text weight="bold">Filters</Text>
+      <Form value={filters} onChange={setFilters}>
+        <Box gap="medium">
+          <FormField label="Role">
+            <Select
+              name="role"
+              options={ROLES}
+              placeholder="Select role"
+              value={filters.role}
+              clear
+            />
+          </FormField>
+          <FormField label="Status">
+            <Select
+              name="status"
+              options={[
+                { label: 'Online', value: 1 },
+                { label: 'Offline', value: 0 }
+              ]}
+              labelKey="label"
+              valueKey="value"
+              placeholder="Select status"
+              value={filters.status}
+              clear
+            />
+          </FormField>
+          <FormField>
+            <CheckBox
+              name="showInactive"
+              label="Show Inactive Users"
+              checked={filters.showInactive}
+            />
+          </FormField>
+        </Box>
+      </Form>
+      <Box direction="row" justify="end" gap="small">
+        <Button label="Clear" onClick={() => setFilters({})} />
+        <Button primary label="Apply" onClick={onClose} />
+      </Box>
+    </Box>
+  </Layer>
+);
+
+const UserTable = ({ title }) => {
   const { client } = useContext(SessionContext);
-  const [data, setData] = useState();
-  const [columns, setColumns] = useState();
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [options, setOptions] = useState();
-  const [properties, setProperties] = useState();
-  const [selected, setSelected] = useState([]);
-  const [displaySelected, setDisplaySelected] = useState(false);
-  const [groupBy, setGroupBy] = useState();
-  const [addUser, setAddUser] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({});
   const [editUser, setEditUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
-  const [error, setError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [addUser, setAddUser] = useState(false);
   const [formValues, setFormValues] = useState({
     Username: '',
     Email: '',
@@ -56,119 +139,60 @@ const UserTable = ({ title, uri }) => {
 
   useMonitor(
     client,
-    ['/api/sites'],
-    ({ ['/api/sites']: sites }) => {
-      if (sites) {
-        setSites(sites.map(site => ({
-          label: site.SiteName,
-          value: site.SiteId.toString(),
-        })));
-        setLoading(false);
-      }
+    [
+      '/api/users',
+      '/api/sites'
+    ],
+    ({ ['/api/users']: userData,
+      ['/api/sites']: siteData }) => {
+      if (!userData || !siteData) return;
+
+      const sitesMap = Object.fromEntries(
+        siteData.map(site => [site.SiteId.toString(), site.SiteName])
+      );
+
+      const transformedUsers = userData.map(user => ({
+        ...user,
+        SiteIds: user.SiteIds.map(siteId => sitesMap[siteId.toString()]
+          || 'Unknown Site')
+      }));
+
+      setUsers(transformedUsers);
+      setSites(siteData.map(site => ({
+        label: site.SiteName,
+        value: site.SiteId.toString(),
+      })));
+      setLoading(false);
     }
   );
 
-  useMonitor(
-    client,
-    [uri],
-    ({ [uri]: collection }) => {
-      if (!collection) return;
-      setLoading(false);
-      setData(collection);
+  const filteredUsers = users.filter(user => {
+    // Text search
+    const matchesSearch =
+      user.Username.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.Email.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.Role.toLowerCase().includes(searchText.toLowerCase());
 
-      const renderProperty = (datum, key) => {
-        switch (key) {
-          case 'CreatedDate':
-          case 'LastLoginDate':
-            return datum[key] && (
-              <Text style={{ whiteSpace: 'nowrap' }}>
-                {new Date(datum[key]).toLocaleString()}
-              </Text>
-            );
-          case 'IsActive':
-            return datum[key] === 1 ? 'Active' : 'Inactive';
-          case 'Password':
-            return '••••••••';
-          default:
-            return datum[key];
-        }
-      };
+    // Role filter
+    const matchesRole = !filters.role || user.Role === filters.role;
 
-      const dataProperties = {
-        UserId: { label: 'User ID', search: true },
-        Username: { label: 'Username', search: true },
-        Email: { label: 'Email', search: true },
-        Role: { label: 'Role', search: true },
-        IsActive: { label: 'Status', search: true },
-        CreatedDate: { label: 'Created Date', search: true },
-        LastLoginDate: { label: 'Last Login', search: true },
-      };
-      setProperties(dataProperties);
+    // Status filter
+    const matchesStatus = filters.status === undefined || user.IsActive === filters.status;
 
-      const cols = [
-        { property: 'UserId', header: 'User ID', primary: true },
-        { property: 'Username', header: 'Username' },
-        { property: 'Email', header: 'Email' },
-        { property: 'Role', header: 'Role' },
-        { property: 'IsActive', header: 'Status' },
-        { property: 'CreatedDate', header: 'Created Date' },
-        { property: 'LastLoginDate', header: 'Last Login' },
-        {
-          property: 'actions',
-          header: 'Actions',
-          render: (datum) => (
-            <Menu
-              icon={<More />}
-              hoverIndicator
-              items={[
-                {
-                  label: 'Edit',
-                  icon: <Edit />,
-                  onClick: () => setEditUser(datum),
-                  disabled: datum.Role !== 'admin' && datum.Role !== 'Admin'
-                },
-                {
-                  label: 'Delete',
-                  icon: <Trash />,
-                  onClick: () => setDeleteUser(datum),
-                  disabled: datum.Role !== 'admin' && datum.Role !== 'Admin'
-                }
-              ]}
-            />
-          ),
-        }
-      ].map(col => ({
-        ...col,
-        render: col.property === 'actions' ?
-          col.render :
-          (datum) => renderProperty(datum, col.property),
-      }));
+    // Active/Inactive filter
+    const matchesActive = filters.showInactive || user.IsActive === 1;
 
-      setColumns(cols);
-      setOptions(cols.filter(col => col.property !== 'actions').map(({ property, header }) => ({
-        property,
-        label: header,
-      })));
-    },
-    [setData, setLoading, setColumns, setOptions, setProperties]
-  );
+    return matchesSearch && matchesRole && matchesStatus && matchesActive;
+  });
 
   const formContent = (
     <Form value={formValues} onChange={setFormValues}>
       <Box gap="medium">
-        <FormField
-          name="Username"
-          label="Username"
-          required
-        >
+        <FormField name="Username" label="Username" required>
           <TextInput name="Username" />
         </FormField>
 
-        <FormField
-          name="Email"
-          label="Email"
-          required
-        >
+        <FormField name="Email" label="Email" required>
           <TextInput name="Email" type="email" />
         </FormField>
 
@@ -180,27 +204,16 @@ const UserTable = ({ title, uri }) => {
           <TextInput name="Password" type="password" />
         </FormField>
 
-        <FormField
-          name="Role"
-          label="Role"
-          required
-        >
-          <Select
-            name="Role"
-            options={ROLES}
-          />
+        <FormField name="Role" label="Role" required>
+          <Select name="Role" options={ROLES} />
         </FormField>
 
-        <FormField
-          name="SiteIds"
-          label="Sites"
-        >
+        <FormField name="SiteIds" label="Sites">
           <SelectMultiple
             name="SiteIds"
             closeOnChange={false}
             placeholder="Select sites"
             options={sites}
-            onChange={({ value }) => setFormValues(prev => ({ ...prev, SiteIds: value }))}
             labelKey="label"
             valueKey={{ key: "value", reduce: true }}
             value={formValues.SiteIds}
@@ -213,14 +226,6 @@ const UserTable = ({ title, uri }) => {
   return (
     <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
       {loading && <LoadingLayer />}
-      {displaySelected && selected?.length !== 0 && (
-        <SelectedDataTable
-          title="Selected Users"
-          data={data.filter((datum) => selected.includes(datum.UserId))}
-          columns={columns}
-          onClose={() => setDisplaySelected(false)}
-        />
-      )}
       <Box>
         <Box
           direction="row"
@@ -229,91 +234,57 @@ const UserTable = ({ title, uri }) => {
           gap="small"
           margin={{ top: 'medium', bottom: 'large' }}
         >
-          <Heading id='idUsers-table' level={5}>
+          <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
             {title}
           </Heading>
-          <Box direction="row" gap="small" flex={false}>
-            <Button
-              primary
-              color="status-critical"
-              label="Add User"
-              onClick={() => setAddUser(true)}
-            />
-          </Box>
         </Box>
       </Box>
-      {data && (
-        <Box>
-          <Grid
-            height={{ min: 'medium' }}
-          >
-            <Data data={data} properties={properties}>
-              <Toolbar align="center" gap="medium">
-                <DataSearch responsive placeholder="Search users" />
-                <DataTableGroups
-                  groups={options.filter(
-                    (option) =>
-                      !['UserId', 'status', 'level'].includes(option.property),
-                  )}
-                  setGroupBy={setGroupBy}
-                />
-                {options && (
-                  <DataTableColumns
-                    drop
-                    tip="Configure columns"
-                    options={options}
-                  />
-                )}
-                <DataFilters layer>
-                  <DataFilter property="UserId" />
-                  <DataFilter property="Username" />
-                  <DataFilter property="Email" />
-                  <DataFilter property="Role" />
-                  <DataFilter property="IsActive"
-                    options={[
-                      { label: 'Active', value: 1 },
-                      { label: 'Inactive', value: 0 },
-                    ]} />
-                  <DataFilter property="CreatedDate" />
-                  <DataFilter property="LastLoginDate" />
-                </DataFilters>
-                <Box flex />
-                <Box direction="row" gap="small" flex={false}>
-                  {selected?.length !== 0 && (
-                    <Button
-                      secondary
-                      label="Clear Selected"
-                      onClick={() => setSelected([])}
-                    />
-                  )}
-                  <Button secondary color="status-critical" label="Reload" onClick={() => setLoading(true)} />
-                  <Button
-                    secondary
-                    label="Display Selected"
-                    onClick={() =>
-                      selected?.length !== 0 && setDisplaySelected(true)
-                    }
-                  />
-                </Box>
-              </Toolbar>
-              <Box direction="row" gap="xsmall" align="center">
-                <DataSummary />
-                {selected?.length !== 0 && (
-                  <Text>{`${selected.length} selected`}</Text>
-                )}
-              </Box>
-              {columns && (
-                <FilteredDataTable
-                  describedBy='idUsers-table'
-                  columns={columns}
-                  selected={selected}
-                  setSelected={setSelected}
-                  groupBy={groupBy}
-                />
-              )}
-            </Data>
-          </Grid>
+
+      <Box direction="row" justify="between" align="center">
+        <Box direction="row" gap="small" align="center">
+          <Box width="medium">
+            <TextInput
+              icon={<Search />}
+              placeholder="Search users..."
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+            />
+          </Box>
+          <Button
+            icon={<Filter />}
+            onClick={() => setShowFilters(true)}
+            badge={Object.keys(filters).length || undefined}
+          />
         </Box>
+        <Button
+          primary
+          color="status-critical"
+          label="Add User"
+          onClick={() => setAddUser(true)}
+        />
+      </Box>
+
+      <Grid
+        height={{ min: 'small' }}
+        columns={{ count: 'fit', size: 'small' }}
+        gap="medium"
+      >
+        {filteredUsers.map(user => (
+          <UserCard
+            key={user.UserId}
+            user={user}
+            onEdit={setEditUser}
+            onDelete={setDeleteUser}
+          />
+        ))}
+      </Grid>
+
+      {showFilters && (
+        <FilterLayer
+          onClose={() => setShowFilters(false)}
+          filters={filters}
+          setFilters={setFilters}
+        />
       )}
 
       {addUser && (
@@ -340,7 +311,6 @@ const UserTable = ({ title, uri }) => {
           }}
           progressLabel={`Adding user ${formValues.Username}...`}
         />
-
       )}
 
       {editUser && (
@@ -389,7 +359,6 @@ const UserTable = ({ title, uri }) => {
 
 UserTable.propTypes = {
   title: PropTypes.string.isRequired,
-  uri: PropTypes.string.isRequired,
 };
 
 export default UserTable;

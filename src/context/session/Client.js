@@ -10,13 +10,8 @@ const config = {
 const POLL_INTERVAL = 60000; // msecs to poll URIs if no event connection
 const TAB_ID = `${Date.now()}-${Math.random()}`; // unique ID per tab
 
-/**
- * A RedfishMonitor object encapsulates a list of URIs a client cares about and
- * a callback to call whenever any of those URIs is first discovered or changes.
- * A client should not create these object directly, but instead use
- * createMonitor() from a RedfishClient object.
- */
-class RedfishMonitor {
+
+class AfoozoMonitor {
   static numCreated = 0;
 
   constructor(uris, callback, forcePoll) {
@@ -25,30 +20,19 @@ class RedfishMonitor {
     this.forcePoll = forcePoll;
     this.poll = null;
     // Each object gets a unique number just to make it easy to track each one.
-    this.num = RedfishMonitor.numCreated;
-    RedfishMonitor.numCreated += 1;
+    this.num = AfoozoMonitor.numCreated;
+    AfoozoMonitor.numCreated += 1;
   }
 }
 
-/**
- * A AfoozoClient object provides an API to the backend server.
- * It caches data as needed to improve performance, without the client having
- * to think about it.
- * You must have a successful login() call on a AfoozoClient before any other
- * method can be expected to work.
- * After a logout or session expiration, you should create a new object if you
- * want to login again.
- */
 class AfoozoClient {
   constructor(devMode, devModeSsePoll) {
-    // The authenticated redfish session.
     this.session = null;
 
     this.mockup = 'http://localhost:5000';
-    // List of RedfishMonitors.
+    // List of AfoozoMonitors.
     this.monitors = [];
 
-    // Redfish event connection.
     this.events = undefined;
     this.eventsFailed = false;
     this.sseOwner = null;
@@ -64,8 +48,6 @@ class AfoozoClient {
 
     // A cache of resources we are currently loading.
     this.loadingCache = {};
-
-    // This limits us to a maximum of 10 concurrent redfish requests.
     this.limit = promiseLimit(10);
 
     // If set, we call this to resolve a promise waiting on all pending GETs
@@ -117,9 +99,9 @@ class AfoozoClient {
    * Returns true if it works.
    */
   testRestoredSession = () => {
-    if (!this.session?.token) {
-      return Promise.resolve(false);
-    }
+    // if (!this.session?.token) {
+    //   return Promise.resolve(false);
+    // }
 
     return fetch('/api/auth/me', {
       headers: {
@@ -216,13 +198,12 @@ class AfoozoClient {
   /**
    * Called to inform that session has expired.
    */
-  sessionExpired() {
-    this.session = null;
+  sessionExpired = () => {
     this.rmSession();
-    this.onSessionExpired();
-    this.onSessionExpired = () => { };
-    this.monitors.forEach((monitor) => this.rmMonitor(monitor));
-  }
+    if (this.onSessionExpired) {
+      this.onSessionExpired();
+    }
+  };
 
   /**
    * Called whenever the session created by login() has expired.
@@ -258,15 +239,6 @@ class AfoozoClient {
   onEvent = () => { };
 
   /**
-   * Create and return a RedfishMonitor.
-   * Whenever any provided URI is first discovered or changes, the provided
-   * callback function is called. It is passed an object with a key/value pair
-   * for every URI requested to be monitored. The key is the URI, and the value
-   * is the JSON object of that redfish resource. If the resource does not
-   * exist or has not yet been discovered, it will be undefined.
-   * TODO: Shouldn't client have a way to differentiate the 2 above cases?
-   * Creating a monitor for a URI will trigger RedfishClient to get that URI.
-   * When a monitor is no longer needed, rmMonitor() must be called with it.
    * @param uris - A list of URIs to monitor. Can use $expand=* notation, but
    *               only on the URI of a collection.
    * @param callback - A function to call when a monitored URI is updated.
@@ -278,7 +250,7 @@ class AfoozoClient {
    *                      - non-zero integer: poll period.
    */
   createMonitor = (uris, callback, forcePoll = false) => {
-    const monitor = new RedfishMonitor(uris, callback, forcePoll);
+    const monitor = new AfoozoMonitor(uris, callback, forcePoll);
     this.monitors.push(monitor);
     const getEmAll = () => {
       uris.forEach((uri) => {
@@ -319,21 +291,21 @@ class AfoozoClient {
   };
 
   /**
-   * Get a redfish resource.
-   * If using a RedfishMonitor, it is not necessary to use this.
-   * Return a promise containing the redfish resource JSON object.
+   * Get a resource.
+   * If using a AfoozoMonitor, it is not necessary to use this.
+   * Return a promise containing the resource JSON object.
    * Or throw an error if that fails.
    * @param uriArg - The URI to get. Can use $expand=* notation, but only if
    *                 targeting a collection.
    * @param isCacheOk - if it's OK to return cached value. Default: true.
    */
   get = (uriArg, isCacheOk = true) => {
-    // Don't want to treat /redfish/v1/ and /redfish/v1 as different
     const [path, query] = uriArg.split('?');
-    if (query && query !== '$expand=*') {
-      throw new Error(`RedfishClient doesnt support query ${query}`);
-    }
+    // if (query && query !== '$expand=*') {
+    //   throw new Error(`Client doesnt support query ${query}`);
+    // }
     const uri = path.replace(/\/$/, '') + (query ? `?${query}` : '');
+    console.log('uri', uri);
     return this.limit(() => this.reallyGet(uri, isCacheOk));
   };
 
@@ -345,7 +317,7 @@ class AfoozoClient {
   rawGet = (uri) => fetch(...this.getFetchArgs(uri, false));
 
   /**
-   * Post data to a redfish URI.
+   * Post data to a URI.
    * Return a promise containing a Response object.
    * @param uriArg - the URI to post to.
    * @param data - the JSON object to post.
@@ -362,34 +334,6 @@ class AfoozoClient {
     }).then((res) => {
       this.checkSessionLoss(res);
       if (res.status === 201) {
-        // This POST created a new redfish resource on this collection.
-        // If not receiving events, re-GET this URI if cached since it has
-        // been updated.
-
-        // Race Condition:
-        // Most URIs require the session to be established, otherwise the GET
-        // request will return 401, which results in the GUI logging out.
-        // This can occur during the initial login when the resource cache
-        // contains "/redfish/v1/SessionService/Sessions". This has been traced
-        // to handleRedfishEvent being called prior to this POST request
-        // completing. It occurs with multiple logins because the SSE
-        // subscription is established on the first login and subsequent tabs
-        // share it. This means a subsequent login can already be receiving
-        // events before the session is established.
-        //
-        // DEBUG that demonstrates the race condition:
-        // console.log('*** RedfishClient post', {
-        //   uri,
-        //   cache: this.resourceCache,
-        //   session: this.session,
-        //   sessionInCache: Boolean(
-        //     this.resourceCache['/redfish/v1/SessionService/Sessions'],
-        //   ),
-        //   errorCondition:
-        //     !!(uri === '/redfish/v1/SessionService/Sessions' &&
-        //     !this.session &&
-        //     this.resourceCache['/redfish/v1/SessionService/Sessions']),
-        // });
         if (this.session && this.events?.readyState !== EventSource.OPEN) {
           [uri, this.getExpandedUri(uri)].forEach((u) => {
             if (u in this.resourceCache) {
@@ -403,7 +347,7 @@ class AfoozoClient {
   }
 
   /**
-   * Patch a redfish resource. A patch selectively updates parts of redfish.
+   * Patch a resource. A patch selectively updates parts.
    * Return a promise containing a Response object.
    * @param uriArg - the URI to patch.
    * @param data - the JSON object to patch with.
@@ -413,7 +357,7 @@ class AfoozoClient {
   }
 
   /**
-   * PUT a redfish resource. A put entirely replaces a part of redfish.
+   * PUT a resource. A put entirely replaces a part of .
    * Return a promise containing a Response object.
    * @param uriArg - the URI to put.
    * @param data - the JSON object to put with.
@@ -423,7 +367,7 @@ class AfoozoClient {
   }
 
   /**
-   * Delete a redfish URI.
+   * Delete a resource.
    * Return a promise containing a Response object.
    * @param uri - the URI to delete.
    */
@@ -444,11 +388,6 @@ class AfoozoClient {
     });
   }
 
-  /**
-   * Return a promise that is resolved the next time a redfish get completes
-   * and there are no other redfish gets in progress.
-   * This can be used to know when a page is finished loading data from redfish.
-   */
   waitForFetches() {
     return new Promise((resolve) => {
       if (this.fetchWaiterResolver !== null) {
@@ -462,7 +401,7 @@ class AfoozoClient {
   /** END OF PUBLIC METHODS. EVERYTHING BELOW HERE IS ONLY FOR INTERNAL USE */
 
   /**
-   * Do the real work to get a redfish resource.
+   * Do the real work to get a resource.
    * This is outside of get() only so that get() can wrap this in PromiseLimit,
    * to limit the number of concurrent GETs we make to the backend.
    */
@@ -493,9 +432,10 @@ class AfoozoClient {
         this.checkSessionLoss(res);
         if (res.status === 404) {
           this.rmFromResourceCache(uri);
-        } else if (res.status === 304) {
-          // Resource hasn't changed since our last GET.
-          return this.resourceCache[uri].body;
+        } else if (res.status === 401) {
+          // token expired login again
+          this.sessionExpired();
+          this.rmSession();
         }
         if (!res.ok) {
           this.doneLoading(uri);
@@ -529,7 +469,7 @@ class AfoozoClient {
   }
 
   /**
-   * PUT or PATCH a redfish resource.
+   * PUT or PATCH a resource.
    * Return a promise containing a Response object.
    * @param uriArg - the URI to PUT/PATCH.
    * @param data - the JSON object to PUT/PATCH with.
@@ -605,40 +545,10 @@ class AfoozoClient {
    */
   handleSseEvent = (evt) => {
     const data = JSON.parse(evt.data);
-    data.Events.forEach((redfishEvent) => {
-      this.handleRedfishEvent(redfishEvent);
-      this.eventChannel.postMessage({ redfishEvent, id: TAB_ID });
+    data.Events.forEach((event) => {
+      this.handleEvent(event);
+      this.eventChannel.postMessage({ event, id: TAB_ID });
     });
-  };
-
-  /**
-   * Handle a received redfish event. Update cache and notify monitors.
-   * @param evt - Redfish event JSON object.
-   */
-  handleRedfishEvent = (evt) => {
-    // Catch exceptions below, otherwise an exception will be interpreted as an
-    // event failure and call onEventFailure().
-    try {
-      const uri = evt.OriginOfCondition['@odata.id'];
-      if (evt.MessageId.split('.')[3] === 'ResourceRemoved') {
-        if (
-          this.session &&
-          (uri === this.session.uri ||
-            uri ===
-            `/redfish/v1/AccountService/Accounts/${this.session.username}`)
-        ) {
-          // Our session or account has expired or been deleted.
-          this.sessionExpired();
-        } else {
-          this.rmFromResourceCache(uri);
-        }
-      } else {
-        this.addToResourceCache(uri, evt.OriginOfCondition);
-      }
-      this.onEvent(evt);
-    } catch (err) {
-      console.error('handleRedfishEvent error', { err, evt });
-    }
   };
 
   /**
@@ -655,10 +565,11 @@ class AfoozoClient {
    * Delete our cached session and event connection.
    */
   rmSession = () => {
-    config.sessionStorage.removeItem('redfish-session-token');
-    config.sessionStorage.removeItem('redfish-session-uri');
-    config.sessionStorage.removeItem('redfish-session-user');
-    config.sessionStorage.removeItem('redfish-session-role');
+    this.session = null;
+    config.sessionStorage.removeItem('session-token');
+    config.sessionStorage.removeItem('session-uri');
+    config.sessionStorage.removeItem('session-user');
+    config.sessionStorage.removeItem('session-role');
     this.resourceCache = {};
     this.loadingCache = {};
     this.eventsFailed = false;
@@ -677,7 +588,7 @@ class AfoozoClient {
     uri in this.resourceCache ? this.resourceCache[uri].body : null;
 
   /**
-   * For a new or updated URI, notify any applicable RedfishMonitors.
+   * For a new or updated URI, notify any applicable AfoozoMonitors.
    * @param uri - URI of resource that has been discovered or updated.
    */
   doMonitorCallbacksForUri = (uri) => {
@@ -693,7 +604,7 @@ class AfoozoClient {
   };
 
   /**
-   * Remove a deleted resource from our cache. Notify RedfishMonitors.
+   * Remove a deleted resource from our cache. Notify AfoozoMonitors.
    * @param uriArg - The URI of the removed resource.
    */
   rmFromResourceCache = (uriArg) => {
@@ -707,9 +618,9 @@ class AfoozoClient {
   };
 
   /**
-   * Add a new or updated resource to our cache. Notify RedfishMonitors.
+   * Add a new or updated resource to our cache. Notify AfoozoMonitors.
    * @param uri - The URI of the new or updated resource.
-   * @param resource - The redfish resource JSON object.
+   * @param resource - The resource JSON object.
    * @param etag - The etag from the HTTP header when getting this resource.
    */
   addToResourceCache = (uri, resource, etag = null) => {
@@ -780,7 +691,7 @@ class AfoozoClient {
   };
 
   /**
-   * Poll URIs for redfish monitors, due to event failure.
+   * Poll URIs for monitors, due to event failure.
    */
   pollForMonitors = () => {
     this.monitors.forEach((monitor) => {
@@ -831,8 +742,6 @@ class AfoozoClient {
     if (sseOwner !== TAB_ID) {
       // Another tab will already send us events via this.eventChannel
       this.useOtherSseOwner();
-    } else {
-      this.startSseConnection();
     }
   };
 
@@ -845,47 +754,10 @@ class AfoozoClient {
   };
 
   /**
-   * Start an SSE connection.
-   */
-  startSseConnection = () => {
-    if (this.events?.readyState === EventSource.OPEN) {
-      return;
-    }
-
-    // Open SSE connection to start receiving events.
-    this.events = new EventSource('/redfish/v1/EventService/SSE', {
-      headers: { 'Authorization': `Bearer ${this.session ? this.session.token : null}` },
-    });
-    window.localStorage.setItem('sse-owner', TAB_ID);
-    this.eventChannel.postMessage({ iOwnSse: true, id: TAB_ID });
-
-    this.events.onopen = () => {
-      this.eventsFailed = false;
-      this.stopTemporaryMonitorPolls();
-      this.onEventSuccess();
-    };
-    this.events.onmessage = this.handleSseEvent;
-    this.events.onerror = (err) => {
-      if (!this.eventsFailed) {
-        this.eventsFailed = true;
-        this.pollForMonitors();
-        this.onEventFailure(err);
-      }
-    };
-  };
-
-  /**
    * Handle message from another tab to the same host / broadcast domain.
    */
   handleEventChannelMessage = ({ data }) => {
-    if (data.redfishEvent) {
-      // Redfish event from a tab that has an SSE connection
-      clearTimeout(this.sseOwnerTimer);
-      if (!this.events) {
-        this.sseOwner = data.id;
-        this.handleRedfishEvent(data.redfishEvent);
-      }
-    } else if (data.iOwnSse) {
+    if (data.iOwnSse) {
       // Another tab just opened an SSE connection
       clearTimeout(this.sseOwnerTimer);
       if (!this.events) {
@@ -913,8 +785,6 @@ class AfoozoClient {
         // Another tab got ownership first!
         // What if it closes before sending an event?
         this.useOtherSseOwner();
-      } else {
-        this.startSseConnection();
       }
     });
   };

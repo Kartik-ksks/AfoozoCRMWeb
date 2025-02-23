@@ -2,12 +2,10 @@ import React, {
     createContext,
     useCallback,
     useMemo,
-    useRef,
     useState,
     useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
-
 import AfoozoClient from './Client';
 
 export const Context = createContext({});
@@ -16,9 +14,8 @@ Context.displayName = 'SessionContext';
 // Create a single client instance
 const client = new AfoozoClient();
 
-export const Provider = ({ children }) => {
+export const Provider = ({ children, onSessionExpired }) => {
     const [loggedIn, setLoggedIn] = useState(() => {
-        // Try to restore session on initial load
         const restored = client.restoreSession();
         return restored ? true : null;
     });
@@ -32,24 +29,34 @@ export const Provider = ({ children }) => {
         return client.session?.role || null;
     });
 
+    const handleLogout = useCallback(() => {
+        client.logout().then(() => {
+            setLoggedIn(false);
+            setUserRole(null);
+        });
+    }, []);
+
     // Handle session restoration on mount
     useEffect(() => {
         if (restoredSession && loggedIn === null) {
             client.testRestoredSession()
                 .then((works) => {
-                    setLoggedIn(works);
                     setRestoredSession(false);
                     if (works) {
+                        setLoggedIn(works);
                         setUserRole(client.session.role);
+                    } else {
+                        handleLogout();
                     }
                 })
                 .catch(() => {
                     setLoggedIn(false);
                     setRestoredSession(false);
                     setUserRole(null);
+                    handleLogout();
                 });
         }
-    }, [restoredSession]);
+    }, [restoredSession, handleLogout, loggedIn]);
 
     // Handle session expiration
     useEffect(() => {
@@ -57,8 +64,11 @@ export const Provider = ({ children }) => {
             setSessionExpired(true);
             setLoggedIn(false);
             setUserRole(null);
+            if (onSessionExpired) {
+                onSessionExpired();
+            }
         };
-    }, []);
+    }, [onSessionExpired]);
 
     const INIT_USERROLE = 'Unknown';
     const userRoleAssigned = useCallback(
@@ -97,8 +107,9 @@ export const Provider = ({ children }) => {
     );
 };
 
-export const { Consumer } = Context;
-
 Provider.propTypes = {
     children: PropTypes.node.isRequired,
+    onSessionExpired: PropTypes.func,
 };
+
+export const { Consumer } = Context;

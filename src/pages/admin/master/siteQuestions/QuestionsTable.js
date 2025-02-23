@@ -51,8 +51,23 @@ const QuestionsTable = ({ title }) => {
       ['/api/sites']: siteData,
       ['/api/site-categories']: categoryData,
     }) => {
-      if (questions) {
-        setData(questions);
+      if (questions && siteData && categoryData) {
+        // Create lookup maps for sites and categories
+        const sitesMap = Object.fromEntries(
+          siteData.map(site => [site.SiteId.toString(), site.SiteName])
+        );
+        const categoriesMap = Object.fromEntries(
+          categoryData.map(category => [category.CategoryId.toString(), category.CategoryName])
+        );
+
+        // Transform questions data to replace IDs with names
+        const transformedQuestions = questions.map(question => ({
+          ...question,
+          SiteIds: question.SiteIds.map(siteId => sitesMap[siteId] || 'Unknown Site'),
+          CategoryIds: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category')
+        }));
+
+        setData(transformedQuestions);
         setLoading(false);
       }
       if (siteData) {
@@ -145,12 +160,14 @@ const QuestionsTable = ({ title }) => {
     {
       property: 'Categories',
       header: 'Categories',
-      render: datum => datum.Categories?.map(cat => cat.CategoryName).join(', ')
+      render: datum => datum.CategoryIds
     },
     {
       property: 'Sites',
       header: 'Sites',
-      render: datum => datum.Sites?.map(site => site.SiteName).join(', ')
+      render: datum => Array.isArray(datum.SiteIds)
+        ? datum.SiteIds.map(site => site || '').join(', ')
+        : ''
     },
     {
       property: 'IsActive',
@@ -191,18 +208,20 @@ const QuestionsTable = ({ title }) => {
   ];
 
   return (
-    <Box fill overflow={{ vertical: 'auto' }} pad="small" gap="medium">
-      <Box direction="row" justify="between" align="center">
-        <Heading level={2} margin="none">
-          {title}
-        </Heading>
-        <Button
-          icon={<Add />}
-          label="New Question"
-          onClick={() => setAddQuestion(true)}
-          primary
-          color="status-critical"
-        />
+    <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
+      {loading && <LoadingLayer />}
+      <Box>
+        <Box
+          direction="row"
+          align="center"
+          justify="between"
+          gap="small"
+          margin={{ top: 'medium', bottom: 'large' }}
+        >
+          <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
+            {title}
+          </Heading>
+        </Box>
       </Box>
 
       {loading ? (
@@ -212,10 +231,10 @@ const QuestionsTable = ({ title }) => {
           <Data data={data}>
             <Toolbar>
               <DataSearch />
-              <DataFilters>
+              {/* <DataFilters>
                 <DataFilter property="QuestionText" />
                 <DataFilter property="IsActive" />
-              </DataFilters>
+              </DataFilters> */}
               <Box flex />
               <Button
                 secondary

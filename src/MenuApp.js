@@ -33,7 +33,7 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
     } = useContext(SessionContext);
     const { isBreakSidebar } = useContext(ResponsiveContext);
     const [showSidebar, setShowSidebar] = useState(true);
-    const [menuData, setMenuData] = useState([]);
+    const [menuData, setMenuData] = useState([])    ;
 
     const updateRole = useCallback(() => {
         setUserRole(client.session.role);
@@ -53,6 +53,9 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                     setRestoredSession(false);
                     if (works) {
                         updateRole();
+                    }
+                    else {
+                        handleLogout();
                     }
                 });
             }
@@ -134,7 +137,7 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
 
                     <Sidebar
                         showSidebar={showSidebar}
-                        background="red!"
+                        background="#01060d"
                         themeMode={themeMode}
                         toggleThemeMode={toggleThemeMode}
                     />

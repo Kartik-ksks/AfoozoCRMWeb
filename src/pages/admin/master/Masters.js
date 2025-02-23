@@ -79,7 +79,6 @@ const Masters = () => {
                   title={renderTabTitle('Site Questions')}
                   uri={SitesUri} />
               )
-
             },
           ]}
         />

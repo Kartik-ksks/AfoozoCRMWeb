@@ -94,7 +94,7 @@ const Accounts = () => {
                         <TableRow>
                             <TableCell scope="row">Last Login</TableCell>
                             <TableCell>
-                                {userData?.LastLoginDate && new Date(userData.LastLoginDate).toLocaleString()}
+                                {userData?.LastLoginTimestamp && new Date(userData.LastLoginTimestamp).toLocaleString()}
                             </TableCell>
                         </TableRow>
                     </TableBody>
@@ -113,10 +113,9 @@ const Accounts = () => {
                                 {sites?.map(site => (
                                     <TableRow key={site.SiteId}>
                                         <TableCell>{site.SiteName}</TableCell>
-                                        <TableCell>{site.Details}</TableCell>
+                                        <TableCell>{site.CategoryId}</TableCell>
                                     </TableRow>
                                 ))}
-
                             </TableBody>
                         </Table>
                     </Box>
@@ -128,42 +127,56 @@ const Accounts = () => {
 
     return (
         <CoverPage title="Accounts" icon={<UserSettings />} >
-
-
-            <TileBox title="Accounts" icon={<UserSettings />} >
+            <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
                 {loading && <LoadingLayer />}
-
-
-                <Box width="large">
-                    {userData && renderUserDetails()}
-                </Box>
-
-                {editPassword && (
-                    <ConfirmOperation
-                        title="Change Password"
-                        text={
-                            <Box gap="medium">
-                                <Text>Enter your new password:</Text>
-                                <TextInput
-                                    type="password"
-                                    placeholder="New password"
-                                    value={newPassword}
-                                    onChange={e => setNewPassword(e.target.value)}
-                                />
+                <Box>
+                    <Box
+                        direction="row"
+                        align="center"
+                        justify="between"
+                        gap="small"
+                        margin={{ top: 'medium', bottom: 'large' }}
+                    >
+                        <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
+                            <Box direction="row" gap="xsmall">
+                                <Text>Accounts</Text>
                             </Box>
-                        }
-                        onConfirm={() => client.put('/api/auth/password', { Password: newPassword })}
-                        onClose={() => {
-                            setEditPassword(false);
-                            setNewPassword('');
-                        }}
-                        yesPrompt="Change Password"
-                        noPrompt="Cancel"
-                        estimatedTime={5}
-                        onSuccess={() => setLoading(true)}
-                    />
-                )}
-            </TileBox>
+                        </Heading>
+                    </Box>
+                </Box>
+                <TileBox title="Accounts" icon={<UserSettings />} >
+                    {loading && <LoadingLayer />}
+                    <Box width="large">
+                        {userData && renderUserDetails()}
+                    </Box>
+
+                    {editPassword && (
+                        <ConfirmOperation
+                            title="Change Password"
+                            text={
+                                <Box gap="medium">
+                                    <Text>Enter your new password:</Text>
+                                    <TextInput
+                                        type="password"
+                                        placeholder="New password"
+                                        value={newPassword}
+                                        onChange={e => setNewPassword(e.target.value)}
+                                    />
+                                </Box>
+                            }
+                            onConfirm={() => client.put('/api/auth/password', { Password: newPassword })}
+                            onClose={() => {
+                                setEditPassword(false);
+                                setNewPassword('');
+                            }}
+                            yesPrompt="Change Password"
+                            noPrompt="Cancel"
+                            estimatedTime={5}
+                            onSuccess={() => setLoading(true)}
+                        />
+                    )}
+                </TileBox>
+            </Box>
         </CoverPage>
     );
 };

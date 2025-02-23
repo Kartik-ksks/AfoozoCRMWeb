@@ -115,14 +115,14 @@ const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, handleLogout }) => 
                         dropContent={
                             <Box align="start">
                                 <Box border="bottom" pad={{ left: 'small', right: 'small' }}>
-                                    <Text size="large">{client.session.username}</Text>
+                                    <Text size="large">{client?.session?.username}</Text>
                                     <Box direction="row" gap="xsmall">
                                         <Text weight="bold">Role:</Text>
-                                        <Text>{client.session.role}</Text>
+                                        <Text>{client?.session?.role}</Text>
                                     </Box>
                                     <Box direction="row" gap="xsmall">
                                         <Text weight="bold">Email:</Text>
-                                        <Text>{client.session.email}</Text>
+                                        <Text>{client?.session?.email}</Text>
                                     </Box>
                                 </Box>
                                 <Button

@@ -130,7 +130,7 @@ const CategoryTable = ({ title }) => {
                     gap="small"
                     margin={{ top: 'medium', bottom: 'large' }}
                 >
-                    <Heading id={id} level={2}>
+                    <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
                         {title}
                     </Heading>
                     <Button

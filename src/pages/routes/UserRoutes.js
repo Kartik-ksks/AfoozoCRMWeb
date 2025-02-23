@@ -13,6 +13,7 @@ export default function UserRoutes() {
         <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/feedback" element={<Feedback />} />
+            <Route path="/feedback/:feedbackType" element={<Feedback />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

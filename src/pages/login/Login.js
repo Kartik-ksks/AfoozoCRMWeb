@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
     Box,
@@ -10,7 +10,7 @@ import {
     Text,
     TextInput,
 } from 'grommet';
-import { FormNext, StatusCritical } from 'grommet-icons';
+import { FormNext, StatusCritical, StatusWarning } from 'grommet-icons';
 import { ProductText, CoverPage } from '../../components';
 
 const FormContainer = ({ themeMode, ...rest }) => (
@@ -28,26 +28,48 @@ const FormContainer = ({ themeMode, ...rest }) => (
     </Box>
 );
 
-const StatusBanner = ({ children }) => (
+const StatusBanner = ({ children, type = 'error' }) => (
     <Box
         direction="row"
-        background="status-critical"
+        background={type === 'error' ? 'status-critical' : 'status-warning'}
         round="xsmall"
         pad="small"
         gap="small"
         margin={{ top: 'small' }}
     >
-        <StatusCritical color="white" />
+        {type === 'error' ? (
+            <StatusCritical color="white" />
+        ) : (
+            <StatusWarning color="white" />
+        )}
         <Text color="white">{children}</Text>
     </Box>
 );
 
 const Login = ({ onLogin, themeMode }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState();
+    const [error, setError] = useState('');
     const [waiting, setWaiting] = useState(false);
+
+    // Check if session expired from location state
+    const sessionExpired = location.state?.sessionExpired;
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setWaiting(true);
+        setError('');
+
+        try {
+            await onLogin(userName, password);
+            navigate('/');
+        } catch (err) {
+            setError(err.message || 'Login failed');
+            setWaiting(false);
+        }
+    };
 
     return (
         <Box
@@ -91,30 +113,17 @@ const Login = ({ onLogin, themeMode }) => {
                             </Header>
 
                             <Form
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    setWaiting(true);
-                                    setError(undefined);
-                                    onLogin(userName, password).then((res) => {
-                                        if (res.status === 200) {
-                                            navigate('/');
-                                        } else {
-                                            setWaiting(false);
-                                            setError('Invalid email or password');
-                                        }
-                                    });
-                                }}
+                                onSubmit={handleSubmit}
                             >
                                 <FormField
-                                    htmlFor="email"
-                                    name="email"
-                                    label="Enter your email address"
+                                    htmlFor="username"
+                                    name="username"
+                                    label="Username"
                                     required={{ indicator: false }}
                                 >
                                     <TextInput
-                                        id="email"
-                                        name="email"
-                                        type="email"
+                                        id="username"
+                                        name="username"
                                         value={userName}
                                         onChange={(event) => setUserName(event.target.value)}
                                     />
@@ -134,7 +143,15 @@ const Login = ({ onLogin, themeMode }) => {
                                         onChange={(event) => setPassword(event.target.value)}
                                     />
                                 </FormField>
+
+                                {sessionExpired && (
+                                    <StatusBanner type="warning">
+                                        Your session has expired. Please login again.
+                                    </StatusBanner>
+                                )}
+
                                 {error && <StatusBanner>{error}</StatusBanner>}
+
                                 <Box direction="row" justify="end" margin={{ top: 'medium' }}>
                                     <Button
                                         type="submit"
@@ -142,7 +159,7 @@ const Login = ({ onLogin, themeMode }) => {
                                         icon={<FormNext />}
                                         disabled={waiting}
                                         primary
-                                        color="status-critical"
+                                        color="brand"
                                     />
                                 </Box>
                             </Form>
@@ -151,7 +168,6 @@ const Login = ({ onLogin, themeMode }) => {
                 </Box>
             </CoverPage>
         </Box>
-
     );
 };
 

@@ -43,7 +43,7 @@ const SidebarHeader = ({ email, name, role }) => (
     gap="medium"
     flex={false}
   >
-    <Box gap="xsmall" pad="small">
+    <Box gap="xsmall" pad="medium">
       <Avatar
         background="status-unknown"
         flex={false}

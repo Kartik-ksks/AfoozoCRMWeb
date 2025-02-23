@@ -2,8 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "../manager/home/Home";
 import Masters from "../manager/master/Masters";
-import CategoryTable from "../admin/master/sitecategories/CategoryTable";
-import FeedbackView from "../common/feedback/FeedbackView";
+import Feedback from "../manager/feedback/Feedback";
 
 export default function ManagerRoutes() {
     return (
@@ -11,8 +10,8 @@ export default function ManagerRoutes() {
             <Route path="/" element={<Home />} />
             <Route path="/masters/:master" element={<Masters />} />
             <Route path="/masters" element={<Masters />} />
-            <Route path="/site-categories" element={<CategoryTable />} />
-            <Route path="/feedback" element={<FeedbackView />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/feedback/:feedbackType" element={<Feedback />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

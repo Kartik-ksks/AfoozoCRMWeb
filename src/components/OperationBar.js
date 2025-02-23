@@ -15,7 +15,7 @@ import React, {
   export const OperationBar = ({
     taskMonitor, // for monitoring an in-progress task
     initCompleted, // for a task already in progress, how much is completed
-    promise, // The promise(s) returned by RedfishClient operation(s), eg a PATCH.
+    promise,
     name, // Text to display above the progress meter.
     estimatedTime, // Estimated time, in seconds, to complete task.
     fill, // Box fill property for the UI

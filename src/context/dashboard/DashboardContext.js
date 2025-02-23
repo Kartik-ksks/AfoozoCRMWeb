@@ -77,7 +77,7 @@ export const Provider = (props) => {
     // console.log('addComponent', { id, name, _props });
     const saveProps = { ..._props }; // shallow copy
     // remove session-specific info
-    delete saveProps.redfish; // reference deleted from props
+    delete saveProps.client; // reference deleted from props
     delete saveProps.userRole; // reference deleted from props
 
     const newComponent = {

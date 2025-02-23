@@ -62,7 +62,6 @@ ConfirmOperation.propTypes = {
     title: PropTypes.string,
     text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
     onClose: PropTypes.func.isRequired,
-    // Must return a redfish promise
     onConfirm: PropTypes.func.isRequired,
     estimatedTime: PropTypes.number.isRequired,
     progressLabel: PropTypes.string,

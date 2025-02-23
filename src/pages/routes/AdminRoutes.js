@@ -2,8 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "../admin/home/Home";
 import Masters from "../admin/master/Masters";
-import FeedbackView from "../common/feedback/FeedbackView";
-
+import Feedback from "../admin/feedback/Feedback";
 
 export default function AdminRoutes() {
     return (
@@ -11,9 +10,9 @@ export default function AdminRoutes() {
             <Route path="/" element={<Home />} />
             <Route path="/masters/:master" element={<Masters />} />
             <Route path="/masters" element={<Masters />} />
-            <Route path="/feedback" element={<FeedbackView />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/feedback/:feedbackType" element={<Feedback />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
     );
 }

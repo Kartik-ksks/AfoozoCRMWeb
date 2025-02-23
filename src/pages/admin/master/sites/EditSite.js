@@ -204,6 +204,7 @@ const EditSite = ({ site, onClose, onSave }) => {
       noPrompt="Cancel"
       estimatedTime={5}
       onSuccess={onSave}
+      onClose={onClose}
     />
   );
 };

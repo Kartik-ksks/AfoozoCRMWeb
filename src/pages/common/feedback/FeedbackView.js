@@ -3,7 +3,7 @@ import { Box, Heading, Card, CardHeader, CardBody, Text } from 'grommet';
 import { Star } from 'grommet-icons';
 import { Tile, TileBox, CoverPage } from '../../../components';
 import { SessionContext, useMonitor } from '../../../context/session';
-import Feeback from '../../../pages/user/feedback/Feedback';
+
 
 const FeedbackView = () => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -37,7 +37,6 @@ const FeedbackView = () => {
                 pad="small"
                 round="small"
                 gap="small"
-
                 border={{
                   top: {
                     size: 'xsmall',
@@ -72,11 +71,6 @@ const FeedbackView = () => {
 
   return (
     <CoverPage title="Feedback" >
-      {client?.session?.role === 'user' && (
-        <Tile title="Feedback" size="large">
-          <Feeback />
-        </Tile>
-      )}
       {renderFeedback()}
     </CoverPage>
 
