@@ -137,11 +137,7 @@ const Accounts = () => {
                         gap="small"
                         margin={{ top: 'medium', bottom: 'large' }}
                     >
-                        <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
-                            <Box direction="row" gap="xsmall">
-                                <Text>Accounts</Text>
-                            </Box>
-                        </Heading>
+                        <Heading level={2}>Accounts</Heading>
                     </Box>
                 </Box>
                 <TileBox title="Accounts" icon={<UserSettings />} >

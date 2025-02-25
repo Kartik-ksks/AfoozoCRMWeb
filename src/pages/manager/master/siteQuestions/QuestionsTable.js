@@ -220,7 +220,7 @@ const QuestionsTable = ({ title }) => {
         >
           <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
             <Box direction="row" gap="xsmall">
-              <Text>Accounts</Text>
+              <Text>Site Questions</Text>
             </Box>
           </Heading>
           <Button

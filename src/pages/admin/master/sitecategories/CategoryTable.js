@@ -117,7 +117,6 @@ const CategoryTable = ({ title }) => {
         ]
     );
 
-    const id = title.replaceAll(' ', '-');
 
     return (
         <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
@@ -130,9 +129,7 @@ const CategoryTable = ({ title }) => {
                     gap="small"
                     margin={{ top: 'medium', bottom: 'large' }}
                 >
-                    <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
-                        {title}
-                    </Heading>
+                    <Heading level={2}>{title}</Heading>
                     <Button
                         primary
                         color="status-critical"
@@ -171,7 +168,7 @@ const CategoryTable = ({ title }) => {
                                 </DataFilters>
                             </Toolbar>
                             <FilteredDataTable
-                                describedBy={id}
+                                describedBy={title}
                                 columns={columns}
                                 groupBy={groupBy}
                             />

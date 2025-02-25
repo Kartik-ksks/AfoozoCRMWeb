@@ -58,7 +58,7 @@ const Masters = () => {
               title: renderTabTitle('Site Categories'),
               children: (
                 <CategoryTable
-                  title='Site Categories'
+                  title={renderTabTitle('Site Categories')}
                   uri={SitesUri} />
               )
             },

@@ -73,7 +73,7 @@ const UserCard = ({ user, onEdit, onDelete }) => {
 };
 
 const FilterLayer = ({ onClose, filters, setFilters }) => (
-  <Layer position="right" onClickOutside={onClose} onEsc={onClose}>
+  <Layer fill position="right" onClickOutside={onClose} onEsc={onClose}>
     <Box pad="medium" gap="medium" width="medium">
       <Text weight="bold">Filters</Text>
       <Form value={filters} onChange={setFilters}>
@@ -234,9 +234,7 @@ const UserTable = ({ title }) => {
           gap="small"
           margin={{ top: 'medium', bottom: 'large' }}
         >
-          <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
-            {title}
-          </Heading>
+          <Heading level={2}>{title}</Heading>
         </Box>
       </Box>
 

@@ -46,15 +46,15 @@ const Feedback = () => {
                             />
                         ),
                     },
-                    {
-                        key: 'view-feedback',
-                        title: renderTabTitle('View Feedback'),
-                        children: (
-                            <ViewFeedback
-                                title='View Feedback'
-                                uri={FeedbackUri} />
-                        )
-                    },
+                    // {
+                    //     key: 'view-feedback',
+                    //     title: renderTabTitle('View Feedback'),
+                    //     children: (
+                    //         <ViewFeedback
+                    //             title='View Feedback'
+                    //             uri={FeedbackUri} />
+                    //     )
+                    // },
                 ]}
             />
         </CoverPage>

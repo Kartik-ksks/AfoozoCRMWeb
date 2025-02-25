@@ -14,18 +14,14 @@ import {
     Stack,
     Meter,
     Chart,
-    TextInput,
-    DataTable,
-    Tip,
-    SelectMultiple,
 } from "grommet";
-import { Star, Analytics, Filter, Search } from "grommet-icons";
+import { Star, Analytics, Filter } from "grommet-icons";
 import { SessionContext, useMonitor } from "../../../context/session";
 
 const RatingChart = ({ data }) => {
     const chartData = data.map(item => ({
-        value: [new Date(item.date), parseInt(item.answer)],
-        label: item.Question.QuestionText
+        value: [new Date(item.date), item.rating],
+        label: item.siteName
     }));
 
     return (
@@ -42,11 +38,11 @@ const RatingChart = ({ data }) => {
     );
 };
 
-const QuestionRatingCard = ({ question, rating, count }) => (
+const SiteRatingCard = ({ siteName, rating, count }) => (
     <Card background="dark-1" elevation="none">
         <CardBody pad="medium">
             <Box gap="small">
-                <Text weight="bold" color="light-1">{question}</Text>
+                <Text weight="bold" color="light-1">{siteName}</Text>
                 <Stack anchor="center">
                     <Meter
                         type="circle"
@@ -59,7 +55,7 @@ const QuestionRatingCard = ({ question, rating, count }) => (
                     />
                     <Box align="center">
                         <Text size="small" color="light-1">{rating.toFixed(1)}</Text>
-                        <Text size="xsmall" color="light-3">{count} responses</Text>
+                        <Text size="xsmall" color="light-3">{count} reviews</Text>
                     </Box>
                 </Stack>
             </Box>
@@ -72,8 +68,8 @@ const ViewFeedback = () => {
     const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
-        siteId: [],
-        categoryId: [],
+        siteId: '',
+        categoryId: '',
         startDate: '',
         endDate: '',
     });
@@ -81,10 +77,9 @@ const ViewFeedback = () => {
     const [categories, setCategories] = useState([]);
     const [analytics, setAnalytics] = useState({
         overallRating: 0,
-        questionRatings: [],
+        siteRatings: [],
         trendData: [],
     });
-    const [searchText, setSearchText] = useState('');
 
     useMonitor(
         client,
@@ -105,76 +100,48 @@ const ViewFeedback = () => {
         }
     );
 
-    const formatDate = (dateValue) => {
-        if (!dateValue) return '';
-        // Handle array/string date values from DateInput
-        const date = Array.isArray(dateValue) ? dateValue[0] : dateValue;
-        return new Date(date).toISOString().split('T')[0];
-    };
-
     const fetchFeedback = async () => {
         setLoading(true);
         const queryParams = new URLSearchParams();
-
-        // Handle multiple siteIds
-        if (filters.siteId?.length > 0) {
-            filters.siteId.forEach(site => {
-                queryParams.append('siteId', site.value);
-            });
-        }
-
-        // Handle multiple categoryIds
-        if (filters.categoryId?.length > 0) {
-            filters.categoryId.forEach(category => {
-                queryParams.append('categoryId', category.value);
-            });
-        }
-
-        // Handle dates
-        if (filters.startDate) {
-            queryParams.append('startDate', formatDate(filters.startDate));
-        }
-        if (filters.endDate) {
-            queryParams.append('endDate', formatDate(filters.endDate));
-        }
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value) queryParams.append(key, value);
+        });
 
         try {
             const response = await client.get(`/api/question-feedback/filter?${queryParams.toString()}`);
             setFeedbacks(response);
 
             // Calculate analytics
-            const questionRatings = {};
-            const questionCounts = {};
+            const siteRatings = {};
+            const siteCounts = {};
             let totalRating = 0;
-            let totalCount = 0;
+            const timelineData = [];
 
             response.forEach(feedback => {
-                const rating = parseInt(feedback.answer);
-                const questionText = feedback.Question.QuestionText;
+                totalRating += feedback.rating;
 
-                if (feedback.Question.QuestionType === 'rating') {
-                    totalRating += rating;
-                    totalCount++;
-
-                    if (!questionRatings[questionText]) {
-                        questionRatings[questionText] = 0;
-                        questionCounts[questionText] = 0;
-                    }
-                    questionRatings[questionText] += rating;
-                    questionCounts[questionText]++;
+                if (!siteRatings[feedback.siteName]) {
+                    siteRatings[feedback.siteName] = 0;
+                    siteCounts[feedback.siteName] = 0;
                 }
+                siteRatings[feedback.siteName] += feedback.rating;
+                siteCounts[feedback.siteName]++;
+
+                timelineData.push({
+                    date: feedback.created_at,
+                    rating: feedback.rating,
+                    siteName: feedback.siteName,
+                });
             });
 
             setAnalytics({
-                overallRating: totalCount > 0 ? totalRating / totalCount : 0,
-                questionRatings: Object.entries(questionRatings).map(([question, rating]) => ({
-                    question,
-                    rating: rating / questionCounts[question],
-                    count: questionCounts[question],
+                overallRating: totalRating / response.length,
+                siteRatings: Object.entries(siteRatings).map(([site, rating]) => ({
+                    siteName: site,
+                    rating: rating / siteCounts[site],
+                    count: siteCounts[site],
                 })),
-                trendData: response
-                    .filter(f => f.Question.QuestionType === 'rating')
-                    .sort((a, b) => new Date(a.date) - new Date(b.date)),
+                trendData: timelineData,
             });
         } catch (error) {
             console.error('Error fetching feedback:', error);
@@ -182,70 +149,6 @@ const ViewFeedback = () => {
             setLoading(false);
         }
     };
-
-    // Add search filter function
-    const filterFeedback = (feedback) => {
-        if (!searchText) return true;
-
-        const searchLower = searchText.toLowerCase();
-        return (
-            feedback.Question.QuestionText.toLowerCase().includes(searchLower) ||
-            feedback.User.Username.toLowerCase().includes(searchLower) ||
-            feedback.answer.toLowerCase().includes(searchLower) ||
-            new Date(feedback.date).toLocaleString().toLowerCase().includes(searchLower)
-        );
-    };
-
-    const columns = [
-        {
-            property: 'Question.QuestionText',
-            header: <Text color="light-1">Question</Text>,
-            render: (datum) => (
-                <Text color="light-1" weight="bold">
-                    {datum.Question.QuestionText}
-                </Text>
-            ),
-        },
-        {
-            property: 'answer',
-            header: <Text color="light-1">Response</Text>,
-            render: (datum) => (
-                datum.Question.QuestionType === 'rating' ? (
-                    <Box direction="row" gap="xxsmall">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                                key={star}
-                                color={star <= parseInt(datum.answer) ? 'status-warning' : 'dark-3'}
-                                size="small"
-                            />
-                        ))}
-                    </Box>
-                ) : (
-                    <Text color="light-1">{datum.answer}</Text>
-                )
-            ),
-        },
-        {
-            property: 'User.Username',
-            header: <Text color="light-1">User</Text>,
-            render: (datum) => (
-                <Tip content={datum.User.Email}>
-                    <Text color="light-3" size="small">
-                        {datum.User.Username}
-                    </Text>
-                </Tip>
-            ),
-        },
-        {
-            property: 'date',
-            header: <Text color="light-1">Date</Text>,
-            render: (datum) => (
-                <Text color="dark-4" size="small">
-                    {new Date(datum.date).toLocaleString()}
-                </Text>
-            ),
-        },
-    ];
 
     return (
         <Box fill overflow={{ vertical: 'auto' }} pad="medium" gap="medium">
@@ -269,30 +172,22 @@ const ViewFeedback = () => {
                 <CardBody pad="medium">
                     <Grid columns="small" gap="medium">
                         <Box gap="small">
-                            <Text color="light-3">Sites</Text>
-                            <SelectMultiple
+                            <Text color="light-3">Site</Text>
+                            <Select
                                 options={sites}
-                                value={filters.siteId || []}
-                                onChange={({ value: nextValue }) =>
-                                    setFilters(prev => ({ ...prev, siteId: nextValue }))
-                                }
+                                value={filters.siteId}
+                                onChange={({ value }) => setFilters({ ...filters, siteId: value })}
                                 placeholder="All Sites"
-                                labelKey="label"
-                                valueKey={{ key: 'value', reduce: false }}
                                 clear
                             />
                         </Box>
                         <Box gap="small">
-                            <Text color="light-3">Categories</Text>
-                            <SelectMultiple
+                            <Text color="light-3">Category</Text>
+                            <Select
                                 options={categories}
-                                value={filters.categoryId || []}
-                                onChange={({ value: nextValue }) =>
-                                    setFilters(prev => ({ ...prev, categoryId: nextValue }))
-                                }
+                                value={filters.categoryId}
+                                onChange={({ value }) => setFilters({ ...filters, categoryId: value })}
                                 placeholder="All Categories"
-                                labelKey="label"
-                                valueKey={{ key: 'value', reduce: false }}
                                 clear
                             />
                         </Box>
@@ -302,9 +197,6 @@ const ViewFeedback = () => {
                                 format="yyyy-mm-dd"
                                 value={filters.startDate}
                                 onChange={({ value }) => setFilters({ ...filters, startDate: value })}
-                                calendarProps={{
-                                    bounds: ['2020-01-01', '2025-12-31']
-                                }}
                             />
                         </Box>
                         <Box gap="small">
@@ -313,9 +205,6 @@ const ViewFeedback = () => {
                                 format="yyyy-mm-dd"
                                 value={filters.endDate}
                                 onChange={({ value }) => setFilters({ ...filters, endDate: value })}
-                                calendarProps={{
-                                    bounds: ['2020-01-01', '2025-12-31']
-                                }}
                             />
                         </Box>
                     </Grid>
@@ -338,64 +227,40 @@ const ViewFeedback = () => {
                     </Card>
 
                     <Grid columns={{ count: 'fit', size: 'small' }} gap="medium">
-                        {analytics.questionRatings.map((item, index) => (
-                            <QuestionRatingCard
+                        {analytics.siteRatings.map((site, index) => (
+                            <SiteRatingCard
                                 key={index}
-                                question={item.question}
-                                rating={item.rating}
-                                count={item.count}
+                                siteName={site.siteName}
+                                rating={site.rating}
+                                count={site.count}
                             />
                         ))}
                     </Grid>
 
-                    <Card background="dark-1" elevation="none">
-                        <CardHeader pad="medium">
-                            <Box direction="row" justify="between" align="center" fill>
-                                <Text color="light-1" weight="bold">Feedback List</Text>
-                                <Box width="medium">
-                                    <TextInput
-                                        placeholder="Search feedback..."
-                                        value={searchText}
-                                        onChange={(event) => setSearchText(event.target.value)}
-                                        icon={<Search color="light-3" />}
-                                    />
-                                </Box>
-                            </Box>
-                        </CardHeader>
-                        <CardBody>
-                            <DataTable
-                                columns={columns}
-                                data={feedbacks.filter(filterFeedback)}
-                                step={10}
-                                paginate
-                                background={{
-                                    header: { color: 'dark-2' },
-                                    body: ['dark-1', 'dark-2'],
-                                }}
-                                border={{
-                                    header: { side: 'bottom', color: 'border' },
-                                    body: { side: 'bottom', color: 'border' },
-                                }}
-                                sort={{
-                                    property: 'date',
-                                    direction: 'desc'
-                                }}
-                                onSort={({ property, direction }) => {
-                                    const sortedFeedbacks = [...feedbacks].sort((a, b) => {
-                                        if (property === 'date') {
-                                            return direction === 'asc'
-                                                ? new Date(a.date) - new Date(b.date)
-                                                : new Date(b.date) - new Date(a.date);
-                                        }
-                                        return direction === 'asc'
-                                            ? a[property] > b[property] ? 1 : -1
-                                            : b[property] > a[property] ? 1 : -1;
-                                    });
-                                    setFeedbacks(sortedFeedbacks);
-                                }}
-                            />
-                        </CardBody>
-                    </Card>
+                    <Box gap="medium">
+                        {feedbacks.map((feedback, index) => (
+                            <Card key={index} background="dark-1" elevation="none">
+                                <CardBody pad="medium" gap="small">
+                                    <Box direction="row" justify="between" align="center">
+                                        <Box direction="row" gap="xxsmall">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                    key={star}
+                                                    color={star <= feedback.rating ? 'status-warning' : 'dark-3'}
+                                                    size="small"
+                                                />
+                                            ))}
+                                        </Box>
+                                        <Text size="small" color="light-3">{feedback.siteName}</Text>
+                                    </Box>
+                                    <Text color="light-1">{feedback.comment}</Text>
+                                    <Text size="small" color="dark-4">
+                                        {new Date(feedback.created_at).toLocaleString()}
+                                    </Text>
+                                </CardBody>
+                            </Card>
+                        ))}
+                    </Box>
                 </Box>
             )}
         </Box>

@@ -221,6 +221,13 @@ const QuestionsTable = ({ title }) => {
           <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
             {title}
           </Heading>
+          <Button
+            icon={<Add />}
+            label="New Question"
+            onClick={() => setAddQuestion(true)}
+            primary
+            color="status-critical"
+          />
         </Box>
       </Box>
 

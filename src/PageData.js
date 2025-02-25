@@ -87,7 +87,7 @@ const mainPageData = [
       {
         title: 'View Feedback',
         path: '/feedback/view-feedback',
-        roles: ['admin', 'manager', 'user'],
+        roles: ['admin', 'manager'],
       },
     ],
   },

@@ -3,9 +3,6 @@ const promiseLimit = require('promise-limit');
 const config = {
   sessionStorage: window.sessionStorage,
 };
-// const EventSource = EventSourcePolyfill;
-
-// const promiseLimit = require('promise-limit');
 
 const POLL_INTERVAL = 60000; // msecs to poll URIs if no event connection
 const TAB_ID = `${Date.now()}-${Math.random()}`; // unique ID per tab
