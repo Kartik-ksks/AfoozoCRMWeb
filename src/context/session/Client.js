@@ -302,7 +302,7 @@ class AfoozoClient {
     //   throw new Error(`Client doesnt support query ${query}`);
     // }
     const uri = path.replace(/\/$/, '') + (query ? `?${query}` : '');
-    console.log('uri', uri);
+    // console.log('uri', uri);
     return this.limit(() => this.reallyGet(uri, isCacheOk));
   };
 

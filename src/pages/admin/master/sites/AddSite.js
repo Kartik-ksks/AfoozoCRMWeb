@@ -73,7 +73,7 @@ const AddSite = ({ onClose, onSave }) => {
     if (imageFile) {
       formData.append('image', imageFile);
     }
-    return client.post('/api/sites', formData, {
+    return client.post('/api/sites', formValues, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -82,7 +82,7 @@ const AddSite = ({ onClose, onSave }) => {
 
   const formContent = (
     <Box overflow="auto" height={{ max: 'large' }}>
-      <Form value={formValues} onChange={setFormValues}>
+      <Form value={formValues} onSubmit={handleSubmit} onChange={setFormValues}>
         <Grid
           columns={['1/2', '1/2']}
           gap="medium"
@@ -106,14 +106,16 @@ const AddSite = ({ onClose, onSave }) => {
                   CategoryId: value.id,
                   CategoryName: value.value
                 })}
+                value={siteTypes.find(type => type.id === formValues.CategoryId)}
               />
             </FormField>
 
-            <FormField name="DisplayOrderNo" label="Display Order No">
+            <FormField name="DisplayOrderNo" label="Display Order No" required>
               <TextInput
                 name="DisplayOrderNo"
                 type="number"
                 placeholder="Enter display order"
+                required
               />
             </FormField>
 
