@@ -5,6 +5,7 @@ import { HashRouter } from 'react-router-dom';
 import { ResponsiveProvider } from './context/responsive';
 import { SessionProvider } from './context/session';
 import { MenuProvider } from './context/menu';
+import { NotificationProvider } from './context/notification/NotificationContext';
 import MenuApp from './MenuApp';
 
 if (!window.matchMedia) {
@@ -49,14 +50,16 @@ const App = () => {
       <Grommet theme={theme} themeMode={themeMode} full>
         <HashRouter>
           <SessionProvider>
-            <MenuProvider>
-              <ResponsiveProvider>
-                <MenuApp
-                  themeMode={themeMode}
-                  toggleThemeMode={toggleThemeMode}
-                />
-              </ResponsiveProvider>
-            </MenuProvider>
+            <ResponsiveProvider>
+              <NotificationProvider>
+                <MenuProvider>
+                  <MenuApp
+                    themeMode={themeMode}
+                    toggleThemeMode={toggleThemeMode}
+                  />
+                </MenuProvider>
+              </NotificationProvider>
+            </ResponsiveProvider>
           </SessionProvider>
         </HashRouter>
       </Grommet>

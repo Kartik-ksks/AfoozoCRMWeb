@@ -73,7 +73,7 @@ const AddSite = ({ onClose, onSave }) => {
     if (imageFile) {
       formData.append('image', imageFile);
     }
-    return client.post('/api/sites', formData, {
+    return client.post('/api/sites', formValues, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

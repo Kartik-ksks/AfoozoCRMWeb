@@ -4,7 +4,7 @@ import { Box, Footer, Text } from 'grommet';
 
 const Information = ({ content = null }) => (
     <Footer
-        border={{ side: 'top', color: 'light-4' }}
+        border={{ side: 'top' }}
         direction="row"
         pad={{ vertical: 'small', horizontal: 'medium' }}
         width="100%"
@@ -31,10 +31,10 @@ const CoverPage = ({ title, children }) => (
             <Information
                 content={
                     <Box align="center" gap="xsmall">
-                        <Text size="small" color="light-1">
+                        <Text size="small">
                             © {new Date().getFullYear()} Afoozo
                         </Text>
-                        <Text size="xsmall" color="light-3">
+                        <Text size="xsmall" >
                             All rights reserved.
                         </Text>
                     </Box>

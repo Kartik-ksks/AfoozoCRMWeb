@@ -1,3 +1,4 @@
+import io from 'socket.io-client';
 const promiseLimit = require('promise-limit');
 
 const config = {
@@ -25,7 +26,7 @@ class AfoozoMonitor {
 class AfoozoClient {
   constructor(devMode, devModeSsePoll) {
     this.session = null;
-
+    this.socket = null;
     this.mockup = 'http://localhost:5000';
     // List of AfoozoMonitors.
     this.monitors = [];
@@ -142,6 +143,7 @@ class AfoozoClient {
           json?.user?.email,
           json?.user?.role,
         );
+        this.initSocket();
         // Return the full response data
         return {
           status: res.status,
@@ -177,9 +179,9 @@ class AfoozoClient {
         this.session = null;
 
         // Close event source if it exists
-        if (this.events) {
-          this.events.close();
-          this.events = undefined;
+        if (this.socket) {
+          this.socket.disconnect();
+          this.socket = null;
         }
 
         return true;
@@ -785,6 +787,30 @@ class AfoozoClient {
       }
     });
   };
+
+  initSocket() {
+    if (!this.socket && this.session) {
+      this.socket = io(this.mockup, {
+        auth: {
+          token: this.session.token
+        },
+        transports: ['websocket']
+      });
+
+      this.socket.on('connect', () => {
+        console.log('Socket connected');
+      });
+
+      this.socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
+    }
+  }
+
+  // logout() {
+
+  //   // ... rest of logout code ...
+  // }
 }
 
 export default AfoozoClient;

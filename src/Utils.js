@@ -190,7 +190,7 @@ export const UseMonitorResponseMessage = (res, extBaseHdlr) =>
     [{ health: 'OK', msg: 'Success!' }]
     : res
       .json()
-      .then((json) => json.Error)
+      .then((json) => json.error)
       // Response body isn't JSON, so we can't explain the failure.
       .catch(() => [
         { health: 'Critical', msg: 'An internal error occurred.' },

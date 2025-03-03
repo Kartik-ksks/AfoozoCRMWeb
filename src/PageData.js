@@ -3,6 +3,7 @@ import {
   Cluster,
   Home,
   Network,
+  Checkbox,
 } from 'grommet-icons';
 
 const mainPageData = [
@@ -88,6 +89,51 @@ const mainPageData = [
         title: 'View Feedback',
         path: '/feedback/view-feedback',
         roles: ['admin', 'manager'],
+      },
+    ],
+  },
+  {
+    name: 'Checklist',
+    Icon: Checkbox,
+    color: 'green',
+    path: 'checklist',
+    roles: ['admin', 'manager', 'user'],
+    items: [
+      {
+        title: 'Daily Checklist',
+        path: '/checklist/daily',
+        roles: ['user'],
+        summary: {
+          title: 'Daily Site Checklist',
+          description: 'Complete daily site inspection checklist',
+        }
+      },
+      {
+        title: 'Checklist Categories',
+        path: '/checklist/categories',
+        roles: ['admin', 'manager'],
+        summary: {
+          title: 'Checklist Management',
+          description: 'Manage checklist categories and items',
+        }
+      },
+      {
+        title: 'Checklists Items',
+        path: '/checklist/items',
+        roles: ['admin', 'manager'],
+        summary: {
+          title: 'Checklist Items',
+          description: 'Manage checklist items',
+        }
+      },
+      {
+        title: 'View Submissions',
+        path: '/checklist/submissions',
+        roles: ['admin', 'manager'],
+        summary: {
+          title: 'Checklist Submissions',
+          description: 'View and manage checklist submissions',
+        }
       },
     ],
   },

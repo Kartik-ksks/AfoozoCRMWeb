@@ -21,7 +21,6 @@ import React, {
     fill, // Box fill property for the UI
     onComplete, // Function. On completion, whether due to success or failure.
     onSuccess, // Function. On completion only on success.
-    // onFail, // Function. On completion only if failure.
     monitorToMessages, // Function. Convert task monitor to strings.
   }) => {
     const { client } = useContext(SessionContext);
@@ -38,9 +37,7 @@ import React, {
     const meterAutoFillTimerRef = useRef(null);
     const waitForTaskTimerRef = useRef(null);
 
-    // Track intermittent failures to poll status. For really long tasks,
-    // we don't want to say it failed just because 1 request didn't make it
-    // through to check on it.
+    // Track intermittent failures to poll status
     const consecutivePollFailsRef = useRef(0);
 
     const isMountedRef = useIsMounted();
@@ -48,12 +45,8 @@ import React, {
     const prevPromise = usePrevious(promise);
 
     // We'll fill up the meter to a max of 90% while waiting.
-    // It'll only move to 100% once we've confirmed it's all done.
     const meterMaxAutoFill = 90;
-
     const meterDelaySecsPerTick = estimatedTime / meterMaxAutoFill;
-
-    // Number of network errors on task poll before declaring the task a failure.
     const MAX_CONSECUTIVE_POLL_FAILS = 5;
 
     useEffect(() => {
@@ -89,27 +82,10 @@ import React, {
         if (status === 'ok') {
           onSuccess();
         }
-        // } else {
-        //   onFail();
-        // }
       }
-      // omit callback props; don't trust parent to memoize their functions
-    }, [completed, status]); // eslint-disable-line react-hooks/exhaustive-deps
-    // }, [completed, onComplete, onFail, onSuccess, status]);
+    }, [completed, status]);
 
-    const complete = useCallback(
-      (sts, msgs = null) => {
-        if (!isMountedRef.current) return;
-
-        setStatus(sts);
-        setMessages(msgs);
-        setCompleted(100);
-      },
-      [isMountedRef],
-    );
-
-    // Call monitorToMessages to create displayable string from monitor.
-    // The return value from monitorToMessages can be a string or a Promise.
+    // Move respToText definition before it's used
     const respToText = useCallback(
       (res) => {
         if (!isMountedRef.current) return;
@@ -123,16 +99,55 @@ import React, {
           });
         }
       },
-      // omit callbacks; don't trust clients to memoize their callback
-      [], // eslint-disable-line react-hooks/exhaustive-deps
-      // [monitorToMessages],
+      [isMountedRef, monitorToMessages]
     );
+
+    const complete = useCallback(
+      (sts, msgs = null) => {
+        if (!isMountedRef.current) return;
+
+        setStatus(sts);
+        setMessages(msgs);
+        setCompleted(100);
+
+        if (sts === 'ok' && onSuccess) {
+          onSuccess();
+        }
+        if (onComplete) {
+          onComplete();
+        }
+      },
+      [isMountedRef, onComplete, onSuccess]
+    );
+
+    const handleResponse = async (response) => {
+      try {
+        if (!response.ok) {
+          const errorData = await response.json();
+          setStatus('critical');
+          setMessages([{
+            health: 'critical',
+            msg: errorData.error || 'An error occurred'
+          }]);
+          setCompleted(100);
+          return false;
+        }
+        return true;
+      } catch (error) {
+        setStatus('critical');
+        setMessages([{
+          health: 'critical',
+          msg: 'Failed to parse server response'
+        }]);
+        setCompleted(100);
+        return false;
+      }
+    };
 
     const waitForTask = useCallback(
       (monitorUri) => {
         if (!isMountedRef.current) return;
 
-        // when called via timeout, reinit timer id
         waitForTaskTimerRef.current = null;
         client
           .rawGet(monitorUri)
@@ -140,17 +155,14 @@ import React, {
             consecutivePollFailsRef.current = 0;
             if (res.ok) {
               if (res.status === 202) {
-                // task is not complete yet, start polling
                 waitForTaskTimerRef.current = setTimeout(
                   () => waitForTask(monitorUri),
                   5000,
                 );
               } else {
-                // task is done!
                 complete('ok');
               }
             } else {
-              // Failed!
               complete('critical');
             }
             respToText(res);
@@ -159,7 +171,6 @@ import React, {
             console.error(err);
             consecutivePollFailsRef.current += 1;
             if (consecutivePollFailsRef.current < MAX_CONSECUTIVE_POLL_FAILS) {
-              // Network error polling the task? Try again unless we hit more.
               waitForTaskTimerRef.current = setTimeout(
                 () => waitForTask(monitorUri),
                 5000,
@@ -174,8 +185,37 @@ import React, {
             }
           });
       },
-      [complete, isMountedRef, client, respToText],
+      [complete, respToText, client]
     );
+
+    const handlePromises = useCallback(async () => {
+      if (!promisesRef.current) return;
+
+      try {
+        const results = await Promise.all(promisesRef.current);
+        const hasError = results.some(res => !res.ok);
+
+        if (hasError) {
+          const errorResponse = results.find(res => !res.ok);
+          const success = await handleResponse(errorResponse);
+          if (!success) return;
+        }
+
+        complete('ok');
+      } catch (error) {
+        console.error('Operation failed:', error);
+        complete('critical', [{
+          health: 'critical',
+          msg: error.message || 'Operation failed'
+        }]);
+      }
+    }, [complete]);
+
+    useEffect(() => {
+      if (promise && promise !== prevPromise) {
+        handlePromises();
+      }
+    }, [promise, prevPromise, handlePromises]);
 
     const monitorPromise = useCallback(() => {
       setStatus('ok');
@@ -297,7 +337,8 @@ import React, {
       }
     }, [color, completed, status]);
 
-    const text = name + (completed === 100 && status === 'ok' ? ' Done!' : '');
+    const text = name + (status === 200 ? ' Done!' : '');
+
     return (
       <Box
         flex={false}
@@ -341,8 +382,6 @@ import React, {
   OperationBar.propTypes = {
     taskMonitor: PropTypes.string,
     initCompleted: PropTypes.number,
-
-    // if monitor is not specified
     promise: PropTypes.oneOfType([
       PropTypes.instanceOf(Promise),
       PropTypes.arrayOf(PropTypes.instanceOf(Promise)),
@@ -352,7 +391,6 @@ import React, {
     fill: PropTypes.oneOf(['horizontal', false]),
     onComplete: PropTypes.func,
     onSuccess: PropTypes.func,
-    // onFail: PropTypes.func,
     monitorToMessages: PropTypes.func,
   };
 
@@ -363,7 +401,6 @@ import React, {
     promise: null,
     onComplete: () => {},
     onSuccess: () => {},
-    // onFail: () => {},
     monitorToMessages: (res) => UseMonitorResponseMessage(res),
   };
 

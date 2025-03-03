@@ -5,6 +5,7 @@ import ProductText from './ProductText';
 import RoutedButton from './RoutedButton';
 import styled from 'styled-components';
 import { SessionContext } from '../context/session';
+import NotificationBell from './NotificationBell';
 
 const StyledMenu = styled(Menu)`
   transition: all 0.3s ease-in-out;
@@ -98,6 +99,9 @@ const Topbar = ({ toggleSidebar, toggleThemeMode, themeMode, handleLogout }) => 
                     </Header>
                 </Box>
                 <Box flex={false} direction="row" align="center">
+                    <Box flex={false} direction="row" align="center">
+                        <NotificationBell />
+                    </Box>
                     <Button
                         data-id="id-theme-mode"
                         onClick={toggleThemeMode}

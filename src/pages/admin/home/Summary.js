@@ -90,7 +90,7 @@ const Summary = () => {
           </CardBody>
         </Card>
 
-        <Card background="neutral-2" elevation="none">
+        <Card background="black" elevation="none">
           <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">
@@ -111,7 +111,7 @@ const Summary = () => {
           </CardBody>
         </Card>
 
-        <Card background="neutral-3" elevation="none">
+        <Card background="black" elevation="none">
           <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">
