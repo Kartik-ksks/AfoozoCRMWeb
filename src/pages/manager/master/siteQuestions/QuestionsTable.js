@@ -3,12 +3,8 @@ import {
   Box,
   Button,
   Data,
-  DataFilter,
-  DataFilters,
   DataSearch,
   DataSummary,
-  DataTableColumns,
-  Grid,
   Heading,
   Text,
   Toolbar,
@@ -21,14 +17,15 @@ import {
   CheckBox,
 } from 'grommet';
 import { More, Edit, Trash, Add } from 'grommet-icons';
-import { ConfirmOperation, LoadingLayer } from '../../../../components';
+import { ConfirmOperation } from '../../../../components';
 import { SessionContext, useMonitor } from '../../../../context/session';
 import { FilteredDataTable } from '../../../../components/dataTable';
 
 const QuestionsTable = ({ title }) => {
   const { client } = useContext(SessionContext);
   const [data, setData] = useState();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [addQuestion, setAddQuestion] = useState(false);
   const [editQuestion, setEditQuestion] = useState(null);
   const [deleteQuestion, setDeleteQuestion] = useState(null);
@@ -42,7 +39,6 @@ const QuestionsTable = ({ title }) => {
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // Monitor questions, sites and categories
   useMonitor(
     client,
     ['/api/questions', '/api/sites', '/api/site-categories'],
@@ -51,24 +47,28 @@ const QuestionsTable = ({ title }) => {
       ['/api/sites']: siteData,
       ['/api/site-categories']: categoryData,
     }) => {
+      setLoading(true);
       if (questions && siteData && categoryData) {
-        // Create lookup maps for sites and categories
-        const sitesMap = Object.fromEntries(
-          siteData.map(site => [site.SiteId.toString(), site.SiteName])
-        );
-        const categoriesMap = Object.fromEntries(
-          categoryData.map(category => [category.CategoryId.toString(), category.CategoryName])
-        );
+        try {
+          const sitesMap = Object.fromEntries(
+            siteData.map(site => [site.SiteId.toString(), site.SiteName])
+          );
+          const categoriesMap = Object.fromEntries(
+            categoryData.map(category => [category.CategoryId.toString(), category.CategoryName])
+          );
 
-        // Transform questions data to replace IDs with names
-        const transformedQuestions = questions.map(question => ({
-          ...question,
-          SiteIds: question.SiteIds.map(siteId => sitesMap[siteId] || 'Unknown Site'),
-          CategoryIds: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category')
-        }));
+          const transformedQuestions = questions.map(question => ({
+            ...question,
+            SiteIds: question.SiteIds.map(siteId => sitesMap[siteId] || 'Unknown Site'),
+            CategoryIds: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category')
+          }));
 
-        setData(transformedQuestions);
-        setLoading(false);
+          setData(transformedQuestions);
+        } catch (error) {
+          console.error('Error transforming data:', error);
+        } finally {
+          setLoading(false);
+        }
       }
       if (siteData) {
         setSites(siteData.map(site => ({
@@ -82,8 +82,14 @@ const QuestionsTable = ({ title }) => {
           value: category.CategoryId.toString(),
         })));
       }
-    }
+    },
+    [reloadTrigger]
   );
+
+  const handleReload = () => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
+  };
 
   const formContent = (
     <Form value={formValues} onChange={setFormValues}>
@@ -209,7 +215,6 @@ const QuestionsTable = ({ title }) => {
 
   return (
     <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
-      {loading && <LoadingLayer />}
       <Box>
         <Box
           direction="row"
@@ -218,10 +223,8 @@ const QuestionsTable = ({ title }) => {
           gap="small"
           margin={{ top: 'medium', bottom: 'large' }}
         >
-          <Heading id='idUsers-table' level={2} margin={{ top: 'medium', bottom: 'large' }}>
-            <Box direction="row" gap="xsmall">
-              <Text>Site Questions</Text>
-            </Box>
+          <Heading level={2} margin={{ top: 'medium', bottom: 'large' }}>
+            {title}
           </Heading>
           <Button
             icon={<Add />}
@@ -234,22 +237,21 @@ const QuestionsTable = ({ title }) => {
       </Box>
 
       {loading ? (
-        <LoadingLayer />
+        <Box pad="medium" align="center">
+          <Text>Loading questions...</Text>
+        </Box>
       ) : (
         <Box>
           <Data data={data}>
             <Toolbar>
               <DataSearch />
-              {/* <DataFilters>
-                <DataFilter property="QuestionText" />
-                <DataFilter property="IsActive" />
-              </DataFilters> */}
               <Box flex />
               <Button
                 secondary
                 color="status-critical"
                 label="Reload"
-                onClick={() => setLoading(true)}
+                onClick={handleReload}
+                disabled={loading}
               />
             </Toolbar>
             <DataSummary />

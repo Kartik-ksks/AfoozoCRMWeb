@@ -21,6 +21,7 @@ const SiteFeedbackCard = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [questions, setQuestions] = useState(null);
+    const [reloadTrigger, setReloadTrigger] = useState(0);
 
     // Monitor sites and categories
     useMonitor(
@@ -45,8 +46,14 @@ const SiteFeedbackCard = () => {
             if (siteData && categoryData) {
                 setLoading(false);
             }
-        }
+        },
+        [reloadTrigger]
     );
+
+    const handleReload = () => {
+        setLoading(true);
+        setReloadTrigger(prev => prev + 1);
+    };
 
     const handleSearch = async () => {
         const queryParams = new URLSearchParams();
@@ -133,6 +140,16 @@ const SiteFeedbackCard = () => {
                             label="Export to Excel"
                         /> */}
                     </Box>
+                </Box>
+
+                <Box direction="row" justify="end" margin={{ bottom: 'small' }}>
+                    <Button
+                        secondary
+                        color="status-critical"
+                        label="Reload"
+                        onClick={handleReload}
+                        disabled={loading}
+                    />
                 </Box>
 
                 {questions && (

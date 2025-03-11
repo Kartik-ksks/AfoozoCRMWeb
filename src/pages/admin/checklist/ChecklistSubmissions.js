@@ -23,15 +23,22 @@ const ChecklistSubmissions = () => {
     startDate: '',
     endDate: '',
   });
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  useMonitor(client, ['/api/sites'], ({ ['/api/sites']: siteData }) => {
-    if (siteData) {
-      setSites(siteData.map(site => ({
-        label: site.SiteName,
-        value: site.SiteId.toString(),
-      })));
-    }
-  });
+  useMonitor(
+    client,
+    ['/api/sites'],
+    ({ ['/api/sites']: siteData }) => {
+      if (siteData) {
+        setSites(siteData.map(site => ({
+          label: site.SiteName,
+          value: site.SiteId.toString(),
+        })));
+      }
+    },
+    [reloadTrigger]
+  );
 
   useEffect(() => {
     fetchSubmissions();
@@ -69,6 +76,12 @@ const ChecklistSubmissions = () => {
     } catch (error) {
       console.error('Error exporting PDF:', error);
     }
+  };
+
+  const handleReload = () => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
+    fetchSubmissions();
   };
 
   const columns = [
@@ -143,6 +156,16 @@ const ChecklistSubmissions = () => {
             </Box>
           </CardBody>
         </Card>
+
+        <Box direction="row" justify="end" margin={{ bottom: 'small' }}>
+          <Button
+            secondary
+            color="status-critical"
+            label="Reload"
+            onClick={handleReload}
+            disabled={loading}
+          />
+        </Box>
 
         <DataTable
           columns={columns}

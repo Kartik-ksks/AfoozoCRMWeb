@@ -33,6 +33,7 @@ const CategoryForm = ({ title }) => {
     Description: '',
   });
   const [sites, setSites] = useState([]);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useMonitor(
     client,
@@ -57,7 +58,8 @@ const CategoryForm = ({ title }) => {
       if (categories && siteData) {
         setLoading(false);
       }
-    }
+    },
+    [reloadTrigger]
   );
 
   const formContent = (
@@ -168,6 +170,11 @@ const CategoryForm = ({ title }) => {
     }
   };
 
+  const handleReload = () => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
+  };
+
   return (
     <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
       {loading && <LoadingLayer />}
@@ -204,7 +211,8 @@ const CategoryForm = ({ title }) => {
                 secondary
                 color="status-critical"
                 label="Reload"
-                onClick={() => setLoading(true)}
+                onClick={handleReload}
+                disabled={loading}
               />
             </Toolbar>
             <DataSummary />

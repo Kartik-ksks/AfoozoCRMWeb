@@ -136,15 +136,12 @@ const UserTable = ({ title }) => {
     SiteIds: [],
   });
   const [sites, setSites] = useState([]);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useMonitor(
     client,
-    [
-      '/api/users',
-      '/api/sites'
-    ],
-    ({ ['/api/users']: userData,
-      ['/api/sites']: siteData }) => {
+    ['/api/users', '/api/sites'],
+    ({ ['/api/users']: userData, ['/api/sites']: siteData }) => {
       if (!userData || !siteData) return;
 
       const sitesMap = Object.fromEntries(
@@ -163,8 +160,14 @@ const UserTable = ({ title }) => {
         value: site.SiteId.toString(),
       })));
       setLoading(false);
-    }
+    },
+    [reloadTrigger]
   );
+
+  const handleReload = () => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
+  };
 
   const filteredUsers = users.filter(user => {
     // Text search
@@ -235,6 +238,12 @@ const UserTable = ({ title }) => {
           margin={{ top: 'medium', bottom: 'large' }}
         >
           <Heading level={2}>{title}</Heading>
+          <Button
+            primary
+            color="status-critical"
+            label="Add User"
+            onClick={() => setAddUser(true)}
+          />
         </Box>
       </Box>
 
@@ -254,12 +263,16 @@ const UserTable = ({ title }) => {
             badge={Object.keys(filters).length || undefined}
           />
         </Box>
-        <Button
-          primary
-          color="status-critical"
-          label="Add User"
-          onClick={() => setAddUser(true)}
-        />
+        <Box direction="row" gap="small" align="center">
+
+          <Button
+            secondary
+            color="status-critical"
+            label="Reload"
+            onClick={handleReload}
+            disabled={loading}
+          />
+        </Box>
       </Box>
 
       <Grid

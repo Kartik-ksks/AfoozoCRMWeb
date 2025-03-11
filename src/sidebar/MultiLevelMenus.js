@@ -32,10 +32,10 @@ const MultiLevelMenus = ({ menus = [], compact }) => {
 
 MultiLevelMenus.propTypes = {
   menus: PropTypes.arrayOf(PropTypes.shape({
-    title: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
     path: PropTypes.string,
     Icon: PropTypes.node,
-    items: PropTypes.array,
+      items: PropTypes.array,
   })),
   compact: PropTypes.bool,
 };

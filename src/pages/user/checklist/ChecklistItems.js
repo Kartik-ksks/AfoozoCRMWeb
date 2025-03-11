@@ -23,6 +23,7 @@ const ChecklistItems = ({ categories, siteId }) => {
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   const handleImageUpload = async (itemId, file) => {
     try {
@@ -105,6 +106,11 @@ const ChecklistItems = ({ categories, siteId }) => {
       });
     }
     setLoading(false);
+  };
+
+  const handleReload = () => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
   };
 
   const totalItems = categories.reduce((total, category) =>
@@ -222,12 +228,21 @@ const ChecklistItems = ({ categories, siteId }) => {
             Object.values(responses).filter(r => r.done).length
           } / {totalItems} items completed
         </Text>
-        <Button
-          primary
-          label="Submit Checklist"
-          onClick={handleSubmit}
-          disabled={loading}
-        />
+        <Box direction="row" gap="small">
+          <Button
+            secondary
+            color="status-critical"
+            label="Reload"
+            onClick={handleReload}
+            disabled={loading}
+          />
+          <Button
+            primary
+            label="Submit Checklist"
+            onClick={handleSubmit}
+            disabled={loading}
+          />
+        </Box>
       </Box>
     </Box>
   );

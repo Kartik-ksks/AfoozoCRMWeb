@@ -20,16 +20,23 @@ const Checklist = () => {
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
   const [checklist, setChecklist] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   // Monitor sites data
-  useMonitor(client, ['/api/sites'], ({ ['/api/sites']: siteData }) => {
-    if (siteData) {
-      setSites(siteData.map(site => ({
-        label: site.SiteName,
-        value: site.SiteId.toString()
-      })));
-    }
-  });
+  useMonitor(
+    client,
+    ['/api/sites'],
+    ({ ['/api/sites']: siteData }) => {
+      if (siteData) {
+        setSites(siteData.map(site => ({
+          label: site.SiteName,
+          value: site.SiteId.toString()
+        })));
+      }
+    },
+    [reloadTrigger]
+  );
 
   // Fetch categories when site is selected
   useEffect(() => {
@@ -51,6 +58,11 @@ const Checklist = () => {
         });
     }
   }, [selectedSite, client]);
+
+  const handleReload = () => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
+  };
 
   return (
     <CoverPage title="Daily Checklist">
@@ -80,6 +92,16 @@ const Checklist = () => {
             siteId={selectedSite}
           />
         )}
+
+        <Box direction="row" justify="end" margin={{ bottom: 'small' }}>
+          <Button
+            secondary
+            color="status-critical"
+            label="Reload"
+            onClick={handleReload}
+            disabled={loading}
+          />
+        </Box>
       </Box>
     </CoverPage>
   );

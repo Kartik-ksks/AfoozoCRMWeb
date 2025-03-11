@@ -78,14 +78,14 @@ const RatingTrendChart = ({ data }) => {
                     <CircleInformation color="light-3" />
                 </Tip>
             </Box>
-            <Box height="small">
-                <Chart
-                    type="line"
-                    values={chartData}
-                    size={{ width: 'full', height: 'small' }}
-                    aria-label="Rating trends"
-                    color="status-warning"
-                    thickness="xsmall"
+        <Box height="small">
+            <Chart
+                type="line"
+                values={chartData}
+                size={{ width: 'full', height: 'small' }}
+                aria-label="Rating trends"
+                color="status-warning"
+                thickness="xsmall"
                     bounds={[[new Date(data[0]?.date), new Date(data[data.length - 1]?.date)], [0, 5]]}
                     animate
                 />
@@ -454,7 +454,7 @@ const ViewFeedback = () => {
                         }
                         questionStats[questionText].total += rating;
                         questionStats[questionText].count += 1;
-                        totalRating += rating;
+                    totalRating += rating;
                         totalCount += 1;
                     }
                 });

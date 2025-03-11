@@ -15,7 +15,7 @@ import {
 } from 'grommet';
 import { Add, More, Edit, Trash } from 'grommet-icons';
 
-import { CoverPage, LoadingLayer, TileBox, Tile } from '../../../../components';
+import { LoadingLayer } from '../../../../components';
 import { SessionContext, useMonitor } from '../../../../context/session';
 import { FilteredDataTable, DataTableGroups } from '../../../../components/dataTable';
 import AddCategory from './AddCategory';
@@ -35,16 +35,17 @@ const CategoryTable = ({ title }) => {
     const [editCategory, setEditCategory] = useState(null);
     const [deleteCategory, setDeleteCategory] = useState(null);
     const [groupBy, setGroupBy] = useState();
+    const [reloadTrigger, setReloadTrigger] = useState(0);
 
     useMonitor(
         client,
-        [uri],
-        ({ [uri]: collection }) => {
-            if (!collection) return;
+        ['/api/site-categories', '/api/sites'],
+        ({ ['/api/site-categories']: categories, ['/api/sites']: siteData }) => {
+            if (!categories) return;
             setLoading(false);
 
             // Sort collection by CategoryId
-            const sortedData = naturalSort(collection, (item) => item.CategoryId);
+            const sortedData = naturalSort(categories, (item) => item.CategoryId);
             setData(sortedData);
 
             const renderProperty = (datum, key) => {
@@ -108,15 +109,13 @@ const CategoryTable = ({ title }) => {
                 label: header,
             })));
         },
-        [
-            setData,
-            setLoading,
-            setColumns,
-            setOptions,
-            setProperties
-        ]
+        [reloadTrigger]
     );
 
+    const handleReload = () => {
+        setLoading(true);
+        setReloadTrigger(prev => prev + 1);
+    };
 
     return (
         <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
@@ -166,6 +165,14 @@ const CategoryTable = ({ title }) => {
                                         { label: 'Inactive', value: 0 },
                                     ]} />
                                 </DataFilters>
+                                <Box flex />
+                                <Button
+                                    secondary
+                                    color="status-critical"
+                                    label="Reload"
+                                    onClick={handleReload}
+                                    disabled={loading}
+                                />
                             </Toolbar>
                             <FilteredDataTable
                                 describedBy={title}

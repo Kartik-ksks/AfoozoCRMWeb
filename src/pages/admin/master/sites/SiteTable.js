@@ -42,15 +42,16 @@ const SiteTable = ({ title, uri }) => {
     const [deleteSite, setDeleteSite] = useState(null);
     const [groupBy, setGroupBy] = useState();
     const [showEditLayer, setShowEditLayer] = useState(false);
+    const [reloadTrigger, setReloadTrigger] = useState(0);
 
     useMonitor(
         client,
-        [uri],
-        ({ [uri]: collection }) => {
-            if (!collection) return;
+        ['/api/sites'],
+        ({ ['/api/sites']: siteData }) => {
+            if (!siteData) return;
             setLoading(false);
             // Sort collection by SiteId
-            const sortedData = naturalSort(collection, (item) => item.SiteId);
+            const sortedData = naturalSort(siteData, (item) => item.SiteId);
             setData(sortedData);
 
             const renderProperty = (datum, key) => {
@@ -119,14 +120,13 @@ const SiteTable = ({ title, uri }) => {
                 label: header,
             })));
         },
-        [
-            setData,
-            setLoading,
-            setColumns,
-            setOptions,
-            setProperties
-        ]
+        [reloadTrigger]
     );
+
+    const handleReload = () => {
+        setLoading(true);
+        setReloadTrigger(prev => prev + 1);
+    };
 
     return (
         <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
@@ -178,6 +178,14 @@ const SiteTable = ({ title, uri }) => {
                                         { label: 'Inactive', value: 0 },
                                     ]} />
                                 </DataFilters>
+                                <Box flex />
+                                <Button
+                                    secondary
+                                    color="status-critical"
+                                    label="Reload"
+                                    onClick={handleReload}
+                                    disabled={loading}
+                                />
                             </Toolbar>
                             <FilteredDataTable
                                 describedBy='idSites-table'

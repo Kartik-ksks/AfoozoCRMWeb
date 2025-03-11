@@ -216,7 +216,7 @@ const ViewFeedback = () => {
                     <Spinner />
                 </Box>
             ) : (
-                <Box gap="medium">
+            <Box gap="medium">
                     <Card background="dark-1" elevation="none">
                         <CardHeader pad="medium">
                             <Text color="light-1" weight="bold">Rating Trends</Text>
@@ -229,7 +229,7 @@ const ViewFeedback = () => {
                     <Grid columns={{ count: 'fit', size: 'small' }} gap="medium">
                         {analytics.siteRatings.map((site, index) => (
                             <SiteRatingCard
-                                key={index}
+                            key={index}
                                 siteName={site.siteName}
                                 rating={site.rating}
                                 count={site.count}
@@ -241,26 +241,26 @@ const ViewFeedback = () => {
                         {feedbacks.map((feedback, index) => (
                             <Card key={index} background="dark-1" elevation="none">
                                 <CardBody pad="medium" gap="small">
-                                    <Box direction="row" justify="between" align="center">
-                                        <Box direction="row" gap="xxsmall">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <Star
-                                                    key={star}
+                            <Box direction="row" justify="between" align="center">
+                                <Box direction="row" gap="xxsmall">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <Star
+                                            key={star}
                                                     color={star <= feedback.rating ? 'status-warning' : 'dark-3'}
-                                                    size="small"
-                                                />
-                                            ))}
-                                        </Box>
+                                            size="small"
+                                        />
+                                    ))}
+                                </Box>
                                         <Text size="small" color="light-3">{feedback.siteName}</Text>
-                                    </Box>
+                            </Box>
                                     <Text color="light-1">{feedback.comment}</Text>
-                                    <Text size="small" color="dark-4">
-                                        {new Date(feedback.created_at).toLocaleString()}
-                                    </Text>
+                            <Text size="small" color="dark-4">
+                                {new Date(feedback.created_at).toLocaleString()}
+                            </Text>
                                 </CardBody>
                             </Card>
-                        ))}
-                    </Box>
+                    ))}
+            </Box>
                 </Box>
             )}
         </Box>
