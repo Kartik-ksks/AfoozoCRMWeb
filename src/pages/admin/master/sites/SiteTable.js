@@ -46,13 +46,21 @@ const SiteTable = ({ title, uri }) => {
 
     useMonitor(
         client,
-        ['/api/sites'],
-        ({ ['/api/sites']: siteData }) => {
+        ['/api/sites', '/api/site-categories'],
+        ({ ['/api/sites']: siteData, ['/api/site-categories']: categoryData }) => {
             if (!siteData) return;
             setLoading(false);
             // Sort collection by SiteId
             const sortedData = naturalSort(siteData, (item) => item.SiteId);
-            setData(sortedData);
+            const categoriesMap = Object.fromEntries(
+                categoryData.map(category => [category.CategoryId.toString(), category.CategoryName])
+            );
+
+            const transformedSites = sortedData.map(site => ({
+                ...site,
+                CategoryId: categoriesMap[site.CategoryId] || 'Unknown Category'
+            }));
+            setData(transformedSites);
 
             const renderProperty = (datum, key) => {
                 switch (key) {
@@ -66,7 +74,7 @@ const SiteTable = ({ title, uri }) => {
             const dataProperties = {
                 SiteId: { label: 'ID', search: true },
                 SiteName: { label: 'Site Name', search: true },
-                CategoryId: { label: 'Site Type', search: true },
+                CategoryId: { label: 'Site Category', search: true },
                 DisplayOrderNo: { label: 'Display Order No', search: true },
                 Details: { label: 'Details', search: true },
                 ContactPerson: { label: 'Contact Person', search: true },
@@ -77,7 +85,7 @@ const SiteTable = ({ title, uri }) => {
             const cols = [
                 { property: 'SiteId', header: 'ID', primary: true },
                 { property: 'SiteName', header: 'Site Name' },
-                { property: 'CategoryId', header: 'Site Type' },
+                { property: 'CategoryId', header: 'Site Category' },
                 { property: 'DisplayOrderNo', header: 'Display Order No' },
                 { property: 'Details', header: 'Details' },
                 { property: 'ContactPerson', header: 'Contact Person' },

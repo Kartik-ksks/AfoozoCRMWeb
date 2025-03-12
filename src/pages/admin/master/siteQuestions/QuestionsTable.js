@@ -45,7 +45,11 @@ const QuestionsTable = ({ title }) => {
 
   useMonitor(
     client,
-    ['/api/questions', '/api/sites', '/api/site-categories'],
+    [
+      '/api/questions',
+      '/api/sites',
+      '/api/site-categories'
+    ],
     ({
       ['/api/questions']: questions,
       ['/api/sites']: siteData,
@@ -269,7 +273,8 @@ const QuestionsTable = ({ title }) => {
           title="Add Question"
           text={formContent}
           onConfirm={() => {
-            return client.post('/api/questions', formValues)}
+            return client.post('/api/questions', formValues)
+          }
           }
           onClose={() => {
             setAddQuestion(false);

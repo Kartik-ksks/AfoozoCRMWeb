@@ -42,16 +42,25 @@ const SiteTable = ({ title, uri }) => {
     const [deleteSite, setDeleteSite] = useState(null);
     const [groupBy, setGroupBy] = useState();
     const [showEditLayer, setShowEditLayer] = useState(false);
+    const [reloadTrigger, setReloadTrigger] = useState(0);
 
     useMonitor(
         client,
-        [uri],
-        ({ [uri]: collection }) => {
-            if (!collection) return;
+        ['/api/sites', '/api/site-categories'],
+        ({ ['/api/sites']: siteData, ['/api/site-categories']: categoryData }) => {
+            if (!siteData) return;
             setLoading(false);
             // Sort collection by SiteId
-            const sortedData = naturalSort(collection, (item) => item.SiteId);
-            setData(sortedData);
+            const sortedData = naturalSort(siteData, (item) => item.SiteId);
+            const categoriesMap = Object.fromEntries(
+                categoryData.map(category => [category.CategoryId.toString(), category.CategoryName])
+            );
+
+            const transformedSites = sortedData.map(site => ({
+                ...site,
+                CategoryId: categoriesMap[site.CategoryId] || 'Unknown Category'
+            }));
+            setData(transformedSites);
 
             const renderProperty = (datum, key) => {
                 switch (key) {
@@ -65,7 +74,7 @@ const SiteTable = ({ title, uri }) => {
             const dataProperties = {
                 SiteId: { label: 'ID', search: true },
                 SiteName: { label: 'Site Name', search: true },
-                CategoryId: { label: 'Site Type', search: true },
+                CategoryId: { label: 'Site Category', search: true },
                 DisplayOrderNo: { label: 'Display Order No', search: true },
                 Details: { label: 'Details', search: true },
                 ContactPerson: { label: 'Contact Person', search: true },
@@ -76,7 +85,7 @@ const SiteTable = ({ title, uri }) => {
             const cols = [
                 { property: 'SiteId', header: 'ID', primary: true },
                 { property: 'SiteName', header: 'Site Name' },
-                { property: 'CategoryId', header: 'Site Type' },
+                { property: 'CategoryId', header: 'Site Category' },
                 { property: 'DisplayOrderNo', header: 'Display Order No' },
                 { property: 'Details', header: 'Details' },
                 { property: 'ContactPerson', header: 'Contact Person' },
@@ -119,14 +128,13 @@ const SiteTable = ({ title, uri }) => {
                 label: header,
             })));
         },
-        [
-            setData,
-            setLoading,
-            setColumns,
-            setOptions,
-            setProperties
-        ]
+        [reloadTrigger]
     );
+
+    const handleReload = () => {
+        setLoading(true);
+        setReloadTrigger(prev => prev + 1);
+    };
 
     return (
         <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
@@ -178,6 +186,14 @@ const SiteTable = ({ title, uri }) => {
                                         { label: 'Inactive', value: 0 },
                                     ]} />
                                 </DataFilters>
+                                <Box flex />
+                                <Button
+                                    secondary
+                                    color="status-critical"
+                                    label="Reload"
+                                    onClick={handleReload}
+                                    disabled={loading}
+                                />
                             </Toolbar>
                             <FilteredDataTable
                                 describedBy='idSites-table'
