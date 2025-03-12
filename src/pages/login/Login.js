@@ -60,115 +60,115 @@ const Login = ({ onLogin, themeMode }) => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setWaiting(true);
-        setError('');
+        // setError('');
+        onLogin(userName, password).then((res) => {
+            if (res.status === 200) {
+                navigate('/');
+            } else {
+                setError(res.message || 'Login failed');
+                setWaiting(false);
+            }
+        });
+    }
 
-        try {
-            await onLogin(userName, password);
-            navigate('/');
-        } catch (err) {
-            setError(err.message || 'Login failed');
-            setWaiting(false);
-        }
-    };
-
-    return (
-        <Box
-            fill
-            align="center"
-            justify="center"
-            background={themeMode === 'dark' ? 'black' : 'light-1'}
-        >
-            <CoverPage title="Login">
-                <Box
-                    width="medium"
-                    pad="medium"
-                    gap="medium"
-                    fill
-                    align="center"
-                    justify="center"
-                >
-                    <Box align="center" margin={{ bottom: 'medium' }}>
-                        <ProductText
-                            vendor="Afoozo"
-                            size="xxlarge"
-                            color={themeMode === 'dark' ? 'white' : 'dark-1'}
-                        />
-                    </Box>
-
-                    <FormContainer themeMode={themeMode}>
-                        <Box gap="large">
-                            <Header
-                                direction="column"
-                                align="start"
-                                gap="xxsmall"
-                                pad={{ horizontal: 'xxsmall' }}
-                            >
-                                <Text
-                                    size="xxlarge"
-                                    weight="bold"
-                                    color={themeMode === 'dark' ? 'white' : 'dark-1'}
-                                >
-                                    Sign In
-                                </Text>
-                            </Header>
-
-                            <Form
-                                onSubmit={handleSubmit}
-                            >
-                                <FormField
-                                    htmlFor="username"
-                                    name="username"
-                                    label="Username"
-                                    required={{ indicator: false }}
-                                >
-                                    <TextInput
-                                        id="username"
-                                        name="username"
-                                        value={userName}
-                                        onChange={(event) => setUserName(event.target.value)}
-                                    />
-                                </FormField>
-
-                                <FormField
-                                    htmlFor="password"
-                                    name="password"
-                                    label="Password"
-                                    required={{ indicator: false }}
-                                >
-                                    <TextInput
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        value={password}
-                                        onChange={(event) => setPassword(event.target.value)}
-                                    />
-                                </FormField>
-
-                                {sessionExpired && (
-                                    <StatusBanner type="warning">
-                                        Your session has expired. Please login again.
-                                    </StatusBanner>
-                                )}
-
-                                {error && <StatusBanner>{error}</StatusBanner>}
-
-                                <Box direction="row" justify="end" margin={{ top: 'medium' }}>
-                                    <Button
-                                        type="submit"
-                                        label={waiting ? 'Signing in...' : 'Sign in'}
-                                        icon={<FormNext />}
-                                        disabled={waiting}
-                                        primary
-                                        color="brand"
-                                    />
-                                </Box>
-                            </Form>
-                        </Box>
-                    </FormContainer>
+return (
+    <Box
+        fill
+        align="center"
+        justify="center"
+        background={themeMode === 'dark' ? 'black' : 'light-1'}
+    >
+        <CoverPage title="Login">
+            <Box
+                width="medium"
+                pad="medium"
+                gap="medium"
+                fill
+                align="center"
+                justify="center"
+            >
+                <Box align="center" margin={{ bottom: 'medium' }}>
+                    <ProductText
+                        vendor="Afoozo"
+                        size="xxlarge"
+                        color={themeMode === 'dark' ? 'white' : 'dark-1'}
+                    />
                 </Box>
-            </CoverPage>
-        </Box>
-    );
+
+                <FormContainer themeMode={themeMode}>
+                    <Box gap="large">
+                        <Header
+                            direction="column"
+                            align="start"
+                            gap="xxsmall"
+                            pad={{ horizontal: 'xxsmall' }}
+                        >
+                            <Text
+                                size="xxlarge"
+                                weight="bold"
+                                color={themeMode === 'dark' ? 'white' : 'dark-1'}
+                            >
+                                Sign In
+                            </Text>
+                        </Header>
+
+                        <Form
+                            onSubmit={handleSubmit}
+                        >
+                            <FormField
+                                htmlFor="username"
+                                name="username"
+                                label="Email"
+                                required={{ indicator: false }}
+                            >
+                                <TextInput
+                                    id="username"
+                                    name="username"
+                                    value={userName}
+                                    onChange={(event) => setUserName(event.target.value)}
+                                />
+                            </FormField>
+
+                            <FormField
+                                htmlFor="password"
+                                name="password"
+                                label="Password"
+                                required={{ indicator: false }}
+                            >
+                                <TextInput
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(event) => setPassword(event.target.value)}
+                                />
+                            </FormField>
+
+                            {sessionExpired && (
+                                <StatusBanner type="warning">
+                                    Your session has expired. Please login again.
+                                </StatusBanner>
+                            )}
+
+                            {error && <StatusBanner>{error}</StatusBanner>}
+
+                            <Box direction="row" justify="end" margin={{ top: 'medium' }}>
+                                <Button
+                                    type="submit"
+                                    label={waiting ? 'Signing in...' : 'Sign in'}
+                                    icon={<FormNext />}
+                                    disabled={waiting}
+                                    primary
+                                    color="brand"
+                                />
+                            </Box>
+                        </Form>
+                    </Box>
+                </FormContainer>
+            </Box>
+        </CoverPage>
+    </Box>
+);
 };
 
 Login.propTypes = {

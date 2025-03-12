@@ -83,13 +83,7 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 return res;
             }
             return res;
-        }).catch(error => {
-            console.error('Login error:', error);
-            setLoggedIn(false);
-            setUserRole(null);
-            setMenuData([]);
-            return { status: 500, error };
-        });
+        })
     };
 
     const handleLogout = useCallback(() => {

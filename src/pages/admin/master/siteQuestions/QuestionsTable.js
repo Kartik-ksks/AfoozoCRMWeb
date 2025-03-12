@@ -38,7 +38,7 @@ const QuestionsTable = ({ title }) => {
     QuestionType: 'rating',
     CategoryIds: [],
     SiteIds: [],
-    IsActive: 1,
+    IsActive: true,
   });
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -157,10 +157,10 @@ const QuestionsTable = ({ title }) => {
           <CheckBox
             name="IsActive"
             label="Active"
-            checked={formValues.IsActive === 1}
+            checked={formValues.IsActive}
             onChange={(e) => setFormValues({
               ...formValues,
-              IsActive: e.target.checked ? 1 : 0
+              IsActive: e.target.checked
             })}
           />
         </FormField>
@@ -186,7 +186,7 @@ const QuestionsTable = ({ title }) => {
     {
       property: 'IsActive',
       header: 'Status',
-      render: datum => datum.IsActive === 1 ? 'Active' : 'Inactive'
+      render: datum => datum.IsActive ? 'Active' : 'In Active'
     },
     {
       property: 'actions',
@@ -283,7 +283,7 @@ const QuestionsTable = ({ title }) => {
               QuestionType: 'rating',
               CategoryIds: [],
               SiteIds: [],
-              IsActive: 1,
+              IsActive: true,
             });
           }}
           yesPrompt="Add"
@@ -309,7 +309,7 @@ const QuestionsTable = ({ title }) => {
               QuestionType: 'rating',
               CategoryIds: [],
               SiteIds: [],
-              IsActive: 1,
+              IsActive: true,
             });
           }}
           yesPrompt="Save"
