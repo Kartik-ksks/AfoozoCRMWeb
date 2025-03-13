@@ -211,3 +211,16 @@ export {
   usePrevious,
   statusIcon,
 };
+
+export const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
+export const validateName = (name) => {
+  return name.length >= 2 && name.length <= 50;
+};
+
+export const validateFeedback = (feedback) => {
+  return feedback.length >= 10 && feedback.length <= 1000;
+};

@@ -16,6 +16,7 @@ import { MenuProvider } from './context/menu';
 import { LoadingLayer } from './components/LoadingLayer';
 import { AdminRoutes, ManagerRoutes, UserRoutes } from './pages/routes';
 import getMenuDataForRole from './context/menu/menuData';
+import FeedbackForm from './pages/feedback/feedbackForm';
 
 
 const MenuApp = ({ themeMode, toggleThemeMode }) => {
@@ -33,7 +34,7 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
     } = useContext(SessionContext);
     const { isBreakSidebar } = useContext(ResponsiveContext);
     const [showSidebar, setShowSidebar] = useState(true);
-    const [menuData, setMenuData] = useState([])    ;
+    const [menuData, setMenuData] = useState([]);
 
     const updateRole = useCallback(() => {
         setUserRole(client.session.role);
@@ -152,6 +153,7 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
         return !loggedIn ? (
             <Routes>
                 <Route path="/login" element={<Login onLogin={onLogin} />} />
+                <Route path="/feedback/:siteId" element={<FeedbackForm />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
         ) : userRole ? (  // Ensure userRole exists before routing
