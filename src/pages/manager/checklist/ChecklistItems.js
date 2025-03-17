@@ -126,7 +126,7 @@ const ChecklistItems = ({ categories, siteId, selectedCategory, checklist }) => 
       // Re-append the updated responsesData
       formData.set('responses', JSON.stringify(responsesData));
 
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const apiUrl = client.mockup;
       await axios.post(`${apiUrl}/api/checklist/submit`, formData, {
         headers: {
           'Authorization': `Bearer ${client.session?.token || ''}`
