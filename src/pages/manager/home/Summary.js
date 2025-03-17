@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   Box,
   Card,
@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 const Summary = () => {
   const { client } = useContext(SessionContext);
   const navigate = useNavigate();
-  const [stats, setStats] = React.useState({
+  const [stats, setStats] = useState({
     users: 0,
     sites: 0,
     categories: 0,
@@ -90,7 +90,7 @@ const Summary = () => {
           </CardBody>
         </Card>
 
-        <Card background="neutral-2" elevation="none">
+        <Card background="black" elevation="none">
           <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">
@@ -111,7 +111,7 @@ const Summary = () => {
           </CardBody>
         </Card>
 
-        <Card background="neutral-3" elevation="none">
+        <Card background="black" elevation="none">
           <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">

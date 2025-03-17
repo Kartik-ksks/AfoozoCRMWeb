@@ -209,6 +209,7 @@ const SiteTable = ({ title, uri }) => {
                 <AddSite
                     onClose={() => setShowAdd(false)}
                     onSave={() => {
+                        handleReload();
                         setShowAdd(false);
                     }}
                 />
@@ -219,6 +220,7 @@ const SiteTable = ({ title, uri }) => {
                     site={editSite}
                     onClose={() => setShowEditLayer(false)}
                     onSave={() => {
+                        handleReload();
                         setEditSite(null);
                         setShowEditLayer(false);
                     }}
@@ -234,7 +236,10 @@ const SiteTable = ({ title, uri }) => {
                     yesPrompt="Yes, Delete"
                     noPrompt="Cancel"
                     estimatedTime={5}
-                    onSuccess={() => setDeleteSite(null)}
+                    onSuccess={() => {
+                        handleReload();
+                        setDeleteSite(null);
+                    }}
                 />
             )}
         </Box>

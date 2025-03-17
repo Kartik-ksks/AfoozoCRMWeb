@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "../manager/home/Home";
 import Masters from "../manager/master/Masters";
 import Feedback from "../manager/feedback/Feedback";
+import ChecklistManagement from "../manager/checklist/ChecklistManagement";
 
 export default function ManagerRoutes() {
     return (
@@ -12,6 +13,8 @@ export default function ManagerRoutes() {
             <Route path="/masters" element={<Masters />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/feedback/:feedbackType" element={<Feedback />} />
+            <Route path="/checklist" element={<ChecklistManagement />} />
+            <Route path="/checklist/:checklistType" element={<ChecklistManagement />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

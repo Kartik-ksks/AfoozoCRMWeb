@@ -92,7 +92,7 @@ const FeedbackForm = () => {
             const response = await client.get(`/api/sites-scan`);
             if (response) {
                 response.forEach(site => {
-                    if (site.SiteId === siteId) {
+                    if (site.SiteId === parseInt(siteId)) {
                         setSiteName(site.SiteName);
                     }
                 });
@@ -203,7 +203,7 @@ const FeedbackForm = () => {
     }
 
     return (
-        <Box fill align="center" pad="medium">
+        <Box fill align="center" pad="medium" overflow="auto">
             <Card background="light-1" elevation="small" width="large">
                 <CardHeader pad="medium" background="dark-2">
                     <Box>
@@ -216,9 +216,9 @@ const FeedbackForm = () => {
                     </Box>
                 </CardHeader>
 
-                <CardBody pad="medium">
+                <CardBody pad="medium" overflow="auto">
                     <Form onSubmit={handleSubmit}>
-                        <Box gap="medium">
+                        <Box gap="medium" overflow="auto">
                             <FormField label="Name" error={errors.username}>
                                 <TextInput
                                     value={formData.username}

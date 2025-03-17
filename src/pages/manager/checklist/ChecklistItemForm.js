@@ -34,7 +34,6 @@ const ChecklistItemForm = ({ title }) => {
     RequireImage: false,
   });
   const [categories, setCategories] = useState([]);
-  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   // Update monitor paths to match backend routes
   useMonitor(
@@ -60,8 +59,7 @@ const ChecklistItemForm = ({ title }) => {
       if (items && categoryData) {
         setLoading(false);
       }
-    },
-    [reloadTrigger]
+    }
   );
 
   const formContent = (
@@ -206,11 +204,6 @@ const ChecklistItemForm = ({ title }) => {
     }
   };
 
-  const handleReload = () => {
-    setLoading(true);
-    setReloadTrigger(prev => prev + 1);
-  };
-
   return (
     <Box fill overflow={{ vertical: 'scroll' }} pad="small" gap="large">
       {loading && <LoadingLayer />}
@@ -247,7 +240,7 @@ const ChecklistItemForm = ({ title }) => {
                 secondary
                 color="status-critical"
                 label="Reload"
-                onClick={handleReload}
+                onClick={() => setLoading(true)}
               />
             </Toolbar>
             <DataSummary />

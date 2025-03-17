@@ -19,36 +19,36 @@ const theme = deepMerge(hpe, {
     // font object is based on node_modules/grommet-theme-hpe
     font: {
       family: "'Metric', Arial, sans-serif",
-      face: `
-        @font-face {
-          font-family: "Metric";
-          src: url("/fonts/MetricHPE-Web-Regular.woff2") format('woff2');
-        }
-        @font-face {
-          font-family: "Metric";
-          src: url("/fonts/MetricHPE-Web-Regular.woff2") format('woff2');
-          font-weight: 400;
-        }
-        @font-face {
-          font-family: "Metric";
-          src: url("/fonts/MetricHPE-Web-Bold.woff2") format('woff2');
-          font-weight: 700;
-        }
-        @font-face {
-          font-family: "Metric";
-          src: url("/fonts/MetricHPE-Web-Semibold.woff2") format('woff2');
-          font-weight: 600;
-        }
-        @font-face {
-          font-family: "Metric";
-          src: url("/fonts/MetricHPE-Web-Medium.woff2") format('woff2');
-          font-weight: 500;
-        }
-        @font-face {
-          font-family: "Metric";
-          src: url("/fonts/MetricHPE-Web-Light.woff2") format('woff2');
-          font-weight: 100;
-        }`,
+      // face: `
+      //   @font-face {
+      //     font-family: "Metric";
+      //     src: url("/fonts/MetricHPE-Web-Regular.woff2") format('woff2');
+      //   }
+      //   @font-face {
+      //     font-family: "Metric";
+      //     src: url("/fonts/MetricHPE-Web-Regular.woff2") format('woff2');
+      //     font-weight: 400;
+      //   }
+      //   @font-face {
+      //     font-family: "Metric";
+      //     src: url("/fonts/MetricHPE-Web-Bold.woff2") format('woff2');
+      //     font-weight: 700;
+      //   }
+      //   @font-face {
+      //     font-family: "Metric";
+      //     src: url("/fonts/MetricHPE-Web-Semibold.woff2") format('woff2');
+      //     font-weight: 600;
+      //   }
+      //   @font-face {
+      //     font-family: "Metric";
+      //     src: url("/fonts/MetricHPE-Web-Medium.woff2") format('woff2');
+      //     font-weight: 500;
+      //   }
+      //   @font-face {
+      //     font-family: "Metric";
+      //     src: url("/fonts/MetricHPE-Web-Light.woff2") format('woff2');
+      //     font-weight: 100;
+      //   }`,
       size: '15px',
       height: '20px',
     },

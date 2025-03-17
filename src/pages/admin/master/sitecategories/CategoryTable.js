@@ -198,6 +198,7 @@ const CategoryTable = ({ title }) => {
                     category={editCategory}
                     onClose={() => setEditCategory(null)}
                     onSave={() => {
+                        handleReload();
                         setEditCategory(null);
                     }}
                 />
@@ -212,7 +213,10 @@ const CategoryTable = ({ title }) => {
                     yesPrompt="yes, Delete"
                     noPrompt="Cancel"
                     estimatedTime={5}
-                    onSuccess={() => setDeleteCategory(null)}
+                    onSuccess={() => {
+                        handleReload();
+                        setDeleteCategory(null);
+                    }}
                 />
             )}
         </Box>

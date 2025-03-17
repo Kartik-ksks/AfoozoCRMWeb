@@ -102,7 +102,7 @@ const mainPageData = [
       {
         title: 'Daily Checklist',
         path: '/checklist/daily',
-        roles: ['user'],
+        roles: ['manager', 'user'],
         summary: {
           title: 'Daily Site Checklist',
           description: 'Complete daily site inspection checklist',

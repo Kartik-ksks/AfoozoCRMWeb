@@ -159,7 +159,7 @@ return (
                                     icon={<FormNext />}
                                     disabled={waiting}
                                     primary
-                                    color="brand"
+                                    color="status-critical"
                                 />
                             </Box>
                         </Form>

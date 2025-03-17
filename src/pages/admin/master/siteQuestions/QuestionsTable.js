@@ -8,7 +8,6 @@ import {
   DataSearch,
   DataSummary,
   DataTableColumns,
-  Grid,
   Heading,
   Text,
   Toolbar,
@@ -19,11 +18,12 @@ import {
   Select,
   SelectMultiple,
   CheckBox,
+  Pagination,
 } from 'grommet';
 import { More, Edit, Trash, Add } from 'grommet-icons';
-import { ConfirmOperation, LoadingLayer } from '../../../../components';
+import { ConfirmOperation } from '../../../../components';
 import { SessionContext, useMonitor } from '../../../../context/session';
-import { FilteredDataTable } from '../../../../components/dataTable';
+import { FilteredDataTable, DataTableGroups } from '../../../../components/dataTable';
 
 const QuestionsTable = ({ title }) => {
   const { client } = useContext(SessionContext);
@@ -42,14 +42,15 @@ const QuestionsTable = ({ title }) => {
   });
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [step, setStep] = useState(10); // Items per page
+  const [page, setPage] = useState(1); // Current page
+  const [options, setOptions] = useState();
+  const [properties, setProperties] = useState();
+  const [groupBy, setGroupBy] = useState();
 
   useMonitor(
     client,
-    [
-      '/api/questions',
-      '/api/sites',
-      '/api/site-categories'
-    ],
+    ['/api/questions', '/api/sites', '/api/site-categories'],
     ({
       ['/api/questions']: questions,
       ['/api/sites']: siteData,
@@ -68,10 +69,49 @@ const QuestionsTable = ({ title }) => {
           const transformedQuestions = questions.map(question => ({
             ...question,
             SiteIds: question.SiteIds.map(siteId => sitesMap[siteId] || 'Unknown Site'),
-            CategoryIds: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category')
+            CategoryIds: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category'),
+            CategoryNames: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category').join(', '),
+            SiteNames: question.SiteIds.map(siteId => sitesMap[siteId] || 'Unknown Site').join(', ')
           }));
 
           setData(transformedQuestions);
+
+          // Setup properties for filtering and search
+          const dataProperties = {
+            QuestionId: { label: 'ID', search: true },
+            QuestionText: { label: 'Question', search: true },
+            QuestionType: {
+              label: 'Type',
+              search: true,
+              options: ['rating', 'text', 'boolean']
+            },
+            CategoryNames: {
+              label: 'Categories',
+              search: true,
+              options: Array.from(new Set(transformedQuestions.flatMap(q => q.CategoryIds || [])))
+            },
+            SiteNames: {
+              label: 'Sites',
+              search: true,
+              options: Array.from(new Set(transformedQuestions.flatMap(q => q.SiteIds || [])))
+            },
+            IsActive: {
+              label: 'Status',
+              search: true,
+              options: ['Active', 'Inactive']
+            }
+          };
+          setProperties(dataProperties);
+
+          // Setup options for column configuration
+          setOptions(
+            Object.keys(dataProperties).map(property => ({
+              property,
+              label: dataProperties[property].label,
+              options: dataProperties[property].options,
+            }))
+          );
+
         } catch (error) {
           console.error('Error transforming data:', error);
         } finally {
@@ -186,7 +226,7 @@ const QuestionsTable = ({ title }) => {
     {
       property: 'IsActive',
       header: 'Status',
-      render: datum => datum.IsActive ? 'Active' : 'In Active'
+      render: datum => datum.IsActive? 'Active' : 'Inactive'
     },
     {
       property: 'actions',
@@ -250,9 +290,36 @@ const QuestionsTable = ({ title }) => {
         </Box>
       ) : (
         <Box>
-          <Data data={data}>
+          <Data
+            data={data}
+            properties={properties}
+            paginate={{
+              step,
+              page,
+              onStepChange: setStep,
+              onPageChange: setPage
+            }}
+          >
             <Toolbar>
               <DataSearch />
+              {/* <DataTableGroups
+                groups={options?.filter(
+                  (option) => ['QuestionType', 'IsActive'].includes(option.property)
+                )}
+                setGroupBy={setGroupBy}
+              /> */}
+              <DataTableColumns
+                drop
+                options={options}
+              />
+              <DataFilters layer>
+                <DataFilter property="QuestionId" />
+                <DataFilter property="QuestionText" />
+                <DataFilter property="QuestionType" />
+                <DataFilter property="CategoryNames" />
+                <DataFilter property="SiteNames" />
+                <DataFilter property="IsActive" />
+              </DataFilters>
               <Box flex />
               <Button
                 secondary
@@ -263,7 +330,20 @@ const QuestionsTable = ({ title }) => {
               />
             </Toolbar>
             <DataSummary />
-            <FilteredDataTable columns={columns} />
+            <FilteredDataTable
+              columns={columns}
+              pad={{ horizontal: 'small', vertical: 'xsmall' }}
+              background={{
+                header: 'dark-2',
+                body: ['dark-1', 'dark-2'],
+              }}
+              border
+              groupBy={groupBy}
+            />
+            <Box align="center" margin={{ top: 'medium' }}>
+              <Pagination
+              />
+            </Box>
           </Data>
         </Box>
       )}
@@ -272,10 +352,7 @@ const QuestionsTable = ({ title }) => {
         <ConfirmOperation
           title="Add Question"
           text={formContent}
-          onConfirm={() => {
-            return client.post('/api/questions', formValues)
-          }
-          }
+          onConfirm={() => client.post('/api/questions', formValues)}
           onClose={() => {
             setAddQuestion(false);
             setFormValues({
@@ -290,7 +367,6 @@ const QuestionsTable = ({ title }) => {
           noPrompt="Cancel"
           estimatedTime={5}
           onSuccess={() => {
-            console.log('Success');
             handleReload();
             setAddQuestion(false);
           }}

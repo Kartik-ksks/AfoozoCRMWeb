@@ -317,7 +317,7 @@ const UserTable = ({ title }) => {
           estimatedTime={5}
           text={formContent}
           onSuccess={() => {
-            setLoading(true);
+            handleReload();
             setAddUser(false);
           }}
           progressLabel={`Adding user ${formValues.Username}...`}
@@ -348,7 +348,10 @@ const UserTable = ({ title }) => {
           noPrompt="Cancel"
           estimatedTime={5}
           text={formContent}
-          onSuccess={() => setLoading(true)}
+          onSuccess={() => {
+            handleReload();
+            setEditUser(null);
+          }}
         />
       )}
 
@@ -361,7 +364,10 @@ const UserTable = ({ title }) => {
           yesPrompt="Delete"
           noPrompt="Cancel"
           estimatedTime={5}
-          onSuccess={() => setLoading(true)}
+          onSuccess={() => {
+            handleReload();
+            setDeleteUser(null);
+          }}
         />
       )}
     </Box>

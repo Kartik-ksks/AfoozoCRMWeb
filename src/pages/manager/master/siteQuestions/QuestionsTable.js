@@ -3,8 +3,11 @@ import {
   Box,
   Button,
   Data,
+  DataFilter,
+  DataFilters,
   DataSearch,
   DataSummary,
+  DataTableColumns,
   Heading,
   Text,
   Toolbar,
@@ -15,11 +18,12 @@ import {
   Select,
   SelectMultiple,
   CheckBox,
+  Pagination,
 } from 'grommet';
 import { More, Edit, Trash, Add } from 'grommet-icons';
 import { ConfirmOperation } from '../../../../components';
 import { SessionContext, useMonitor } from '../../../../context/session';
-import { FilteredDataTable } from '../../../../components/dataTable';
+import { FilteredDataTable, DataTableGroups } from '../../../../components/dataTable';
 
 const QuestionsTable = ({ title }) => {
   const { client } = useContext(SessionContext);
@@ -34,10 +38,15 @@ const QuestionsTable = ({ title }) => {
     QuestionType: 'rating',
     CategoryIds: [],
     SiteIds: [],
-    IsActive: 1,
+    IsActive: true,
   });
   const [sites, setSites] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [step, setStep] = useState(10); // Items per page
+  const [page, setPage] = useState(1); // Current page
+  const [options, setOptions] = useState();
+  const [properties, setProperties] = useState();
+  const [groupBy, setGroupBy] = useState();
 
   useMonitor(
     client,
@@ -60,10 +69,49 @@ const QuestionsTable = ({ title }) => {
           const transformedQuestions = questions.map(question => ({
             ...question,
             SiteIds: question.SiteIds.map(siteId => sitesMap[siteId] || 'Unknown Site'),
-            CategoryIds: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category')
+            CategoryIds: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category'),
+            CategoryNames: question.CategoryIds.map(catId => categoriesMap[catId] || 'Unknown Category').join(', '),
+            SiteNames: question.SiteIds.map(siteId => sitesMap[siteId] || 'Unknown Site').join(', ')
           }));
 
           setData(transformedQuestions);
+
+          // Setup properties for filtering and search
+          const dataProperties = {
+            QuestionId: { label: 'ID', search: true },
+            QuestionText: { label: 'Question', search: true },
+            QuestionType: {
+              label: 'Type',
+              search: true,
+              options: ['rating', 'text', 'boolean']
+            },
+            CategoryNames: {
+              label: 'Categories',
+              search: true,
+              options: Array.from(new Set(transformedQuestions.flatMap(q => q.CategoryIds || [])))
+            },
+            SiteNames: {
+              label: 'Sites',
+              search: true,
+              options: Array.from(new Set(transformedQuestions.flatMap(q => q.SiteIds || [])))
+            },
+            IsActive: {
+              label: 'Status',
+              search: true,
+              options: ['Active', 'Inactive']
+            }
+          };
+          setProperties(dataProperties);
+
+          // Setup options for column configuration
+          setOptions(
+            Object.keys(dataProperties).map(property => ({
+              property,
+              label: dataProperties[property].label,
+              options: dataProperties[property].options,
+            }))
+          );
+
         } catch (error) {
           console.error('Error transforming data:', error);
         } finally {
@@ -149,10 +197,10 @@ const QuestionsTable = ({ title }) => {
           <CheckBox
             name="IsActive"
             label="Active"
-            checked={formValues.IsActive === 1}
+            checked={formValues.IsActive}
             onChange={(e) => setFormValues({
               ...formValues,
-              IsActive: e.target.checked ? 1 : 0
+              IsActive: e.target.checked
             })}
           />
         </FormField>
@@ -178,7 +226,7 @@ const QuestionsTable = ({ title }) => {
     {
       property: 'IsActive',
       header: 'Status',
-      render: datum => datum.IsActive === 1 ? 'Active' : 'Inactive'
+      render: datum => datum.IsActive? 'Active' : 'Inactive'
     },
     {
       property: 'actions',
@@ -242,9 +290,27 @@ const QuestionsTable = ({ title }) => {
         </Box>
       ) : (
         <Box>
-          <Data data={data}>
+          <Data data={data} properties={properties}>
             <Toolbar>
               <DataSearch />
+              {/* <DataTableGroups
+                groups={options?.filter(
+                  (option) => ['QuestionType', 'IsActive'].includes(option.property)
+                )}
+                setGroupBy={setGroupBy}
+              /> */}
+              <DataTableColumns
+                drop
+                options={options}
+              />
+              <DataFilters layer>
+                <DataFilter property="QuestionId" />
+                <DataFilter property="QuestionText" />
+                <DataFilter property="QuestionType" />
+                <DataFilter property="CategoryNames" />
+                <DataFilter property="SiteNames" />
+                <DataFilter property="IsActive" />
+              </DataFilters>
               <Box flex />
               <Button
                 secondary
@@ -255,7 +321,20 @@ const QuestionsTable = ({ title }) => {
               />
             </Toolbar>
             <DataSummary />
-            <FilteredDataTable columns={columns} />
+            <FilteredDataTable
+              columns={columns}
+              pad={{ horizontal: 'small', vertical: 'xsmall' }}
+              background={{
+                header: 'dark-2',
+                body: ['dark-1', 'dark-2'],
+              }}
+              border
+              step={step}
+              onSetStep={setStep}
+              page={page}
+              onSetPage={setPage}
+              groupBy={groupBy}
+            />
           </Data>
         </Box>
       )}
@@ -272,7 +351,7 @@ const QuestionsTable = ({ title }) => {
               QuestionType: 'rating',
               CategoryIds: [],
               SiteIds: [],
-              IsActive: 1,
+              IsActive: true,
             });
           }}
           yesPrompt="Add"
@@ -297,7 +376,7 @@ const QuestionsTable = ({ title }) => {
               QuestionType: 'rating',
               CategoryIds: [],
               SiteIds: [],
-              IsActive: 1,
+              IsActive: true,
             });
           }}
           yesPrompt="Save"

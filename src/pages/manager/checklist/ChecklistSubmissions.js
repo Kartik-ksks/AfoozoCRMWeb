@@ -28,14 +28,10 @@ const ChecklistSubmissions = () => {
 
   useMonitor(
     client,
-    ['/api/checklist-submissions', '/api/users', '/api/sites'],
-    ({
-      ['/api/checklist-submissions']: submissions,
-      ['/api/users']: users,
-      ['/api/sites']: sites,
-    }) => {
-      if (sites) {
-        setSites(sites.map(site => ({
+    ['/api/sites'],
+    ({ ['/api/sites']: siteData }) => {
+      if (siteData) {
+        setSites(siteData.map(site => ({
           label: site.SiteName,
           value: site.SiteId.toString(),
         })));
@@ -128,64 +124,66 @@ const ChecklistSubmissions = () => {
   ];
 
   return (
-    <Box pad="medium" gap="medium">
-      <Card background="dark-1">
-        <CardHeader pad="medium">
-          <Text weight="bold">Filters</Text>
-        </CardHeader>
-        <CardBody pad="medium">
-          <Box direction="row" gap="medium">
-            <Select
-              placeholder="Select Site"
-              options={sites || []}
-              labelKey="label"
-              valueKey="value"
-              value={filters.siteId}
-              onChange={({ value }) => setFilters(prev => ({ ...prev, siteId: value }))}
-              clear
-            />
-            <DateInput
-              format="mm/dd/yyyy"
-              value={filters.startDate}
-              onChange={({ value }) => setFilters(prev => ({ ...prev, startDate: value }))}
-              placeholder="Start Date"
-            />
-            <DateInput
-              format="mm/dd/yyyy"
-              value={filters.endDate}
-              onChange={({ value }) => setFilters(prev => ({ ...prev, endDate: value }))}
-              placeholder="End Date"
-            />
-          </Box>
-        </CardBody>
-      </Card>
+    <CoverPage title="Checklist Submissions">
+      <Box pad="medium" gap="medium">
+        <Card background="dark-1">
+          <CardHeader pad="medium">
+            <Text weight="bold">Filters</Text>
+          </CardHeader>
+          <CardBody pad="medium">
+            <Box direction="row" gap="medium">
+              <Select
+                placeholder="Select Site"
+                options={sites || []}
+                labelKey="label"
+                valueKey="value"
+                value={filters.siteId}
+                onChange={({ value }) => setFilters(prev => ({ ...prev, siteId: value }))}
+                clear
+              />
+              <DateInput
+                format="mm/dd/yyyy"
+                value={filters.startDate}
+                onChange={({ value }) => setFilters(prev => ({ ...prev, startDate: value }))}
+                placeholder="Start Date"
+              />
+              <DateInput
+                format="mm/dd/yyyy"
+                value={filters.endDate}
+                onChange={({ value }) => setFilters(prev => ({ ...prev, endDate: value }))}
+                placeholder="End Date"
+              />
+            </Box>
+          </CardBody>
+        </Card>
 
-      <Box direction="row" justify="end" margin={{ bottom: 'small' }}>
-        <Button
-          secondary
-          color="status-critical"
-          label="Reload"
-          onClick={handleReload}
-          disabled={loading}
+        <Box direction="row" justify="end" margin={{ bottom: 'small' }}>
+          <Button
+            secondary
+            color="status-critical"
+            label="Reload"
+            onClick={handleReload}
+            disabled={loading}
+          />
+        </Box>
+
+        <DataTable
+          columns={columns}
+          data={submissions}
+          background={{
+            header: 'dark-2',
+            body: ['dark-1', 'dark-2'],
+          }}
+          border
+          pad="small"
+          placeholder={
+            <Box pad="medium" align="center">
+              <Text color="text-weak">No submissions found</Text>
+            </Box>
+          }
         />
       </Box>
-
-      <DataTable
-        columns={columns}
-        data={submissions}
-        background={{
-          header: 'dark-2',
-          body: ['dark-1', 'dark-2'],
-        }}
-        border
-        pad="small"
-        placeholder={
-          <Box pad="medium" align="center">
-            <Text color="text-weak">No submissions found</Text>
-          </Box>
-        }
-      />
-    </Box>
+    </CoverPage>
   );
 };
 
