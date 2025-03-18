@@ -290,7 +290,16 @@ const QuestionsTable = ({ title }) => {
         </Box>
       ) : (
         <Box>
-          <Data data={data} properties={properties}>
+          <Data
+            data={data}
+            properties={properties}
+            paginate={{
+              step,
+              page,
+              onStepChange: setStep,
+              onPageChange: setPage
+            }}
+          >
             <Toolbar>
               <DataSearch />
               {/* <DataTableGroups
@@ -329,12 +338,12 @@ const QuestionsTable = ({ title }) => {
                 body: ['dark-1', 'dark-2'],
               }}
               border
-              step={step}
-              onSetStep={setStep}
-              page={page}
-              onSetPage={setPage}
               groupBy={groupBy}
             />
+            <Box align="center" margin={{ top: 'medium' }}>
+              <Pagination
+              />
+            </Box>
           </Data>
         </Box>
       )}
@@ -358,7 +367,7 @@ const QuestionsTable = ({ title }) => {
           noPrompt="Cancel"
           estimatedTime={5}
           onSuccess={() => {
-            setLoading(true);
+            handleReload();
             setAddQuestion(false);
           }}
         />
@@ -383,7 +392,7 @@ const QuestionsTable = ({ title }) => {
           noPrompt="Cancel"
           estimatedTime={5}
           onSuccess={() => {
-            setLoading(true);
+            handleReload();
             setEditQuestion(null);
           }}
         />
@@ -399,7 +408,7 @@ const QuestionsTable = ({ title }) => {
           noPrompt="Cancel"
           estimatedTime={5}
           onSuccess={() => {
-            setLoading(true);
+            handleReload();
             setDeleteQuestion(null);
           }}
         />

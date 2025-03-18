@@ -4,6 +4,8 @@ import Home from "../manager/home/Home";
 import Masters from "../manager/master/Masters";
 import Feedback from "../manager/feedback/Feedback";
 import ChecklistManagement from "../manager/checklist/ChecklistManagement";
+import Accounts from "../user/accounts/Accounts";
+
 
 export default function ManagerRoutes() {
     return (
@@ -15,6 +17,7 @@ export default function ManagerRoutes() {
             <Route path="/feedback/:feedbackType" element={<Feedback />} />
             <Route path="/checklist" element={<ChecklistManagement />} />
             <Route path="/checklist/:checklistType" element={<ChecklistManagement />} />
+            <Route path="/accounts" element={<Accounts />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

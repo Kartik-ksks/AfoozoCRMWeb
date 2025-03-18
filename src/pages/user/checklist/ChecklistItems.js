@@ -1,11 +1,10 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   Box,
   Card,
   CardHeader,
   CardBody,
   Text,
-  CheckBox,
   TextArea,
   Button,
   FileInput,
@@ -13,38 +12,49 @@ import {
   Grid,
   Notification,
 } from 'grommet';
-import { Upload, StatusGood } from 'grommet-icons';
+import { Upload, StatusGood, Like as ThumbsUp, Dislike as ThumbsDown } from 'grommet-icons';
 import { SessionContext } from '../../../context/session';
 import Toast from '../../../components/Toast';
+import axios from 'axios';
 
-const ChecklistItems = ({ categories, siteId }) => {
+const ChecklistItems = ({ categories, siteId, selectedCategory, checklist }) => {
   const { client } = useContext(SessionContext);
   const [responses, setResponses] = useState({});
+  const [imageFiles, setImageFiles] = useState({});
+  const [imagePreviews, setImagePreviews] = useState({});
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  const handleImageUpload = async (itemId, file) => {
+  const handleImageUpload = (itemId, file) => {
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      // Store the file object
+      setImageFiles(prev => ({
+        ...prev,
+        [itemId]: file
+      }));
 
-      const response = await client.post('/api/checklist/upload-image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      // Create a preview URL for the image
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreviews(prev => ({
+        ...prev,
+        [itemId]: previewUrl
+      }));
 
+      // Update responses to indicate an image is attached
       setResponses(prev => ({
         ...prev,
         [itemId]: {
           ...prev[itemId],
-          image: response.data.url
+          hasImage: true
         }
       }));
     } catch (error) {
+      console.error('Image upload error:', error);
       setNotification({
         status: 'critical',
-        message: 'Failed to upload image'
+        message: 'Failed to process image: ' + (error.message || 'Unknown error')
       });
     }
   };
@@ -58,6 +68,13 @@ const ChecklistItems = ({ categories, siteId }) => {
           missingRequired.push({
             category: category.CategoryName,
             question: item.Question
+          });
+        }
+
+        if (item.RequireImage && !imageFiles[item.ItemId]) {
+          missingRequired.push({
+            category: category.CategoryName,
+            question: `${item.Question} (image required)`
           });
         }
       });
@@ -75,46 +92,129 @@ const ChecklistItems = ({ categories, siteId }) => {
     return true;
   };
 
+  // In your React component, modify the handleSubmit function:
   const handleSubmit = async () => {
-    if (!validateResponses()) {
-      return;
-    }
+    // if (!validateResponses()) {
+    //   return;
+    // }
 
     setLoading(true);
     try {
-      const submissionPromises = Object.entries(responses).map(([itemId, response]) => {
-        return {
-          itemId,
-          done: response.done || false,
-          comment: response.comment || '',
-          image: response.image || ''
+      const formData = new FormData();
+
+      // Prepare responses data
+      const responsesData = Object.entries(responses)
+        .filter(([_, response]) => response.done !== undefined)
+        .map(([itemId, response]) => ({
+          itemId: parseInt(itemId, 10),
+          done: Boolean(response.done),
+          comment: response.comment || ''
+        }));
+
+      formData.append('responses', JSON.stringify(responsesData));
+
+      // CHANGE HERE: Use 'images' as the field name for all files
+      // and include the itemId as metadata in the responses
+      Object.keys(imageFiles).forEach((itemId, index) => {
+        if (imageFiles[itemId]) {
+          formData.append('images', imageFiles[itemId]);
+          // Update the corresponding response with the index of this file
+          responsesData[responsesData.findIndex(r => r.itemId === parseInt(itemId, 10))].imageIndex = index;
         }
       });
-      await client.post('/api/checklist/submit', submissionPromises)
 
-      // await Promise.all(submissionPromises);
+      // Re-append the updated responsesData
+      formData.set('responses', JSON.stringify(responsesData));
+
+      const apiUrl = client.mockup;
+      await axios.post(`${apiUrl}/api/checklist/submit`, formData, {
+        headers: {
+          'Authorization': `Bearer ${client.session?.token || ''}`
+        }
+      });
 
       setNotification({
         status: 'normal',
         message: 'Checklist submitted successfully'
       });
-      setResponses({});
+
+      resetForm();
     } catch (error) {
+      console.error('Submission error:', error);
+      const errorMessage = error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to submit checklist';
+
       setNotification({
         status: 'critical',
-        message: 'Failed to submit checklist'
+        message: errorMessage
       });
     }
     setLoading(false);
   };
 
+  const resetForm = () => {
+    // Initialize empty responses for all items
+    const initialResponses = {};
+
+    // Use filteredChecklist instead of categories since that's what we're displaying
+    if (Array.isArray(filteredChecklist)) {
+      filteredChecklist.forEach(category => {
+        if (Array.isArray(category.ChecklistItems)) {
+          category.ChecklistItems.forEach(item => {
+            initialResponses[item.ItemId] = {
+              done: false,
+              comment: ''
+            };
+          });
+        }
+      });
+    }
+
+    // Clean up object URLs with safety check
+    if (imagePreviews && typeof imagePreviews === 'object') {
+      Object.values(imagePreviews).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    }
+
+    setResponses(initialResponses);
+    setImageFiles({});
+    setImagePreviews({});
+  };
+
   const handleReload = () => {
     setLoading(true);
     setReloadTrigger(prev => prev + 1);
+    // Add actual reload logic here if needed
+    setLoading(false);
   };
 
-  const totalItems = categories.reduce((total, category) =>
-    total + category.ChecklistItems.length, 0);
+  // Filter the checklist to only show the selected category
+  const filteredChecklist = React.useMemo(() => {
+    if (!checklist || !selectedCategory) return [];
+
+    return checklist.filter(category =>
+      category.CategoryId.toString() === selectedCategory
+    );
+  }, [checklist, selectedCategory]);
+
+  // Safe calculation for total items
+  const totalItems = React.useMemo(() => {
+    if (!filteredChecklist || !filteredChecklist.length) return 0;
+
+    return filteredChecklist.reduce((total, category) =>
+      total + (category.ChecklistItems?.length || 0), 0
+    );
+  }, [filteredChecklist]);
+
+  // Clean up object URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(imagePreviews).forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviews]);
 
   return (
     <Box gap="medium">
@@ -137,47 +237,99 @@ const ChecklistItems = ({ categories, siteId }) => {
       <Card background="dark-1">
         <CardHeader pad="medium">
           <Box direction="row" justify="between" align="center" fill>
-            <Text weight="bold">Today's Checklist</Text>
-            <Text>{new Date().toLocaleDateString()}</Text>
+            <Text weight="bold">Today's Checklist - {new Date().toLocaleDateString()}</Text>
+          </Box>
+          <Box direction="row" gap="small">
+            <Button
+              secondary
+              color="status-critical"
+              label="Reload"
+              onClick={handleReload}
+              disabled={loading}
+            />
+            <Button
+              primary
+              color="status-critical"
+              label="Submit Checklist"
+              onClick={handleSubmit}
+              disabled={loading}
+            />
           </Box>
         </CardHeader>
       </Card>
 
       <Grid columns={{ count: 'fit', size: 'medium' }} gap="medium">
-        {categories.map(category => (
-          category.ChecklistItems.length > 0 && (
+        {filteredChecklist.map(category => (
+          (category.ChecklistItems?.length > 0) && (
             <Card key={category.CategoryId} background="dark-1">
               <CardHeader pad="medium">
                 <Box direction="row" justify="between" align="center" fill>
                   <Text weight="bold">{category.CategoryName}</Text>
                   <Text size="small">
-                    {category.ChecklistItems.filter(item =>
+                    {(category.ChecklistItems || []).filter(item =>
                       responses[item.ItemId]?.done
-                    ).length} / {category.ChecklistItems.length} completed
+                    ).length} / {category.ChecklistItems?.length || 0} completed
                   </Text>
                 </Box>
               </CardHeader>
               <CardBody pad="medium">
-                {category.ChecklistItems.map(item => (
-                  <Box key={item.ItemId} gap="small" pad="small">
+                {(category.ChecklistItems || []).map(item => (
+                  <Box key={item.ItemId} gap="small" pad="small" border={{ side: 'bottom', color: 'dark-3' }} margin={{ bottom: 'small' }}>
                     <Box direction="row" gap="small" align="center">
                       <Text>{item.Question}</Text>
                       {item.IsRequired && (
                         <Text color="status-critical" size="small">*Required</Text>
                       )}
+                      {item.RequireImage && (
+                        <Text color="accent-1" size="small">*Image required</Text>
+                      )}
                     </Box>
                     <Box gap="small">
-                      <CheckBox
-                        label="Completed"
-                        checked={responses[item.ItemId]?.done || false}
-                        onChange={e => setResponses(prev => ({
-                          ...prev,
-                          [item.ItemId]: {
-                            ...prev[item.ItemId],
-                            done: e.target.checked
-                          }
-                        }))}
-                      />
+                      <Box direction="row" gap="medium" align="center">
+                        <Box
+                          direction="row"
+                          align="center"
+                          gap="small"
+                          onClick={() => setResponses(prev => ({
+                            ...prev,
+                            [item.ItemId]: {
+                              ...prev[item.ItemId],
+                              done: true
+                            }
+                          }))}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <ThumbsUp
+                            color={responses[item.ItemId]?.done === true ? "status-ok" : "light-5"}
+                            size="medium"
+                          />
+                          <Text size="small" color={responses[item.ItemId]?.done === true ? "status-ok" : "light-5"}>
+                            Completed
+                          </Text>
+                        </Box>
+
+                        <Box
+                          direction="row"
+                          align="center"
+                          gap="small"
+                          onClick={() => setResponses(prev => ({
+                            ...prev,
+                            [item.ItemId]: {
+                              ...prev[item.ItemId],
+                              done: false
+                            }
+                          }))}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <ThumbsDown
+                            color={responses[item.ItemId]?.done === false ? "status-critical" : "light-5"}
+                            size="medium"
+                          />
+                          <Text size="small" color={responses[item.ItemId]?.done === false ? "status-critical" : "light-5"}>
+                            Not Completed
+                          </Text>
+                        </Box>
+                      </Box>
 
                       <TextArea
                         placeholder="Add comment"
@@ -191,28 +343,69 @@ const ChecklistItems = ({ categories, siteId }) => {
                         }))}
                       />
 
-                      {item.RequireImage && (
-                        <Box direction="row" gap="small" align="center">
-                          <FileInput
-                            accept="image/*"
-                            onChange={event => {
-                              const file = event.target.files[0];
-                              handleImageUpload(item.ItemId, file);
-                            }}
-                            messages={{
-                              dropPrompt: 'Drop image here or click to upload'
-                            }}
-                          />
-                          {responses[item.ItemId]?.image && (
-                            <Image
-                              src={responses[item.ItemId].image}
-                              fit="cover"
-                              width="50px"
-                              height="50px"
-                            />
+                      {/* Image Upload Section - Show for all items, but mark as required when needed */}
+                      <Box gap="small">
+                        <Box direction="row" align="center" gap="small">
+                          <Upload size="small" />
+                          <Text size="small">Upload Image</Text>
+                          {item.RequireImage && (
+                            <Text color="accent-1" size="xsmall">*required</Text>
                           )}
                         </Box>
-                      )}
+
+                        <FileInput
+                          accept="image/*"
+                          onChange={event => {
+                            const file = event.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(item.ItemId, file);
+                            }
+                          }}
+                          messages={{
+                            dropPrompt: 'Drop image here',
+                            browse: 'Select Image'
+                          }}
+                        />
+
+                        {imagePreviews[item.ItemId] && (
+                          <Box height="small" width="small" margin={{ top: 'small' }}>
+                            <Image
+                              src={imagePreviews[item.ItemId]}
+                              fit="contain"
+                            />
+                            <Button
+                              size="small"
+                              label="Remove"
+                              onClick={() => {
+                                // Remove image preview
+                                URL.revokeObjectURL(imagePreviews[item.ItemId]);
+                                setImagePreviews(prev => {
+                                  const updated = { ...prev };
+                                  delete updated[item.ItemId];
+                                  return updated;
+                                });
+
+                                // Remove file
+                                setImageFiles(prev => {
+                                  const updated = { ...prev };
+                                  delete updated[item.ItemId];
+                                  return updated;
+                                });
+
+                                // Update response
+                                setResponses(prev => ({
+                                  ...prev,
+                                  [item.ItemId]: {
+                                    ...prev[item.ItemId],
+                                    hasImage: false
+                                  }
+                                }));
+                              }}
+                              margin={{ top: 'xsmall' }}
+                            />
+                          </Box>
+                        )}
+                      </Box>
                     </Box>
                   </Box>
                 ))}
@@ -228,21 +421,6 @@ const ChecklistItems = ({ categories, siteId }) => {
             Object.values(responses).filter(r => r.done).length
           } / {totalItems} items completed
         </Text>
-        <Box direction="row" gap="small">
-          <Button
-            secondary
-            color="status-critical"
-            label="Reload"
-            onClick={handleReload}
-            disabled={loading}
-          />
-          <Button
-            primary
-            label="Submit Checklist"
-            onClick={handleSubmit}
-            disabled={loading}
-          />
-        </Box>
       </Box>
     </Box>
   );

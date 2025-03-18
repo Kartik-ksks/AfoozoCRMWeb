@@ -27,8 +27,8 @@ class AfoozoClient {
   constructor(devMode, devModeSsePoll) {
     this.session = null;
     this.socket = null;
-    this.mockup = 'https://api.afoozo.com';
-    // this.mockup = 'http://localhost:5000';
+    // this.mockup = 'https://api.afoozo.com';
+    this.mockup = 'http://localhost:5000';
     // List of AfoozoMonitors.
     this.monitors = [];
 

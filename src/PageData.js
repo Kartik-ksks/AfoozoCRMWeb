@@ -71,7 +71,7 @@ const mainPageData = [
     Icon: Cluster,
     color: 'lightblue',
     path: 'accounts',
-    roles: ['user'],
+    roles: ['manager', 'user'],
   },
   {
     name: 'Feedback',

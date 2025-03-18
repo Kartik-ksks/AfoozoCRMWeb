@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Accounts from "../user/accounts/Accounts";
 // import FeedbackView from "../common/feedback/FeedbackView";
 import Feedback from "../user/feedback/Feedback";
-import Checklist from "../user/checklist/Checklist";
+import ChecklistManagement from "../user/checklist/ChecklistManagement";
 
 export default function UserRoutes() {
     // convsole.log(userRole);
@@ -13,8 +13,8 @@ export default function UserRoutes() {
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/feedback/:feedbackType" element={<Feedback />} />
             <Route path="/accounts" element={<Accounts />} />
-            <Route path="/checklist" element={<Checklist />} />
-            <Route path="/checklist/:siteId" element={<Checklist />} />
+            <Route path="/checklist" element={<ChecklistManagement />} />
+            <Route path="/checklist/:checklistType" element={<ChecklistManagement />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
