@@ -1,11 +1,10 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext } from 'react';
 import {
   Box,
   Card,
   CardBody,
   CardHeader,
   Grid,
-  Heading,
   Meter,
   Stack,
   Text,
@@ -18,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 const Summary = () => {
   const { client } = useContext(SessionContext);
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
+  const [stats, setStats] = React.useState({
     users: 0,
     sites: 0,
     categories: 0,
@@ -66,15 +65,25 @@ const Summary = () => {
   );
 
   return (
-    <Box fill pad="medium" gap="medium">
-      {/* Top Stats Cards */}
-      <Grid columns={{ count: 4, size: 'auto' }} gap="medium">
-        <Card background="brand" elevation="none">
-          <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
+    <Box fill pad={{ horizontal: "medium", vertical: "small" }} gap="medium">
+      {/* Top Stats Cards - Responsive grid with better spacing */}
+      <Grid
+        columns={{
+          count: 'fit',
+          size: ['auto', 'small']
+        }}
+        rows="auto"
+        gap="medium"
+        fill="horizontal"
+        margin={{ bottom: "medium" }}
+      >
+        {/* Total Users Card */}
+        <Card background="brand" elevation="none" height="xsmall">
+          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">
                 <Group color="light-1" />
-                <Text color="light-1">Total Users</Text>
+                <Text color="light-1" size="small">Total Users</Text>
               </Box>
               <Button
                 plain
@@ -83,19 +92,20 @@ const Summary = () => {
               />
             </Box>
           </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Text size="xxlarge" weight="bold" color="light-1">
+          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
+            <Text size="xlarge" weight="bold" color="light-1">
               {stats.users}
             </Text>
           </CardBody>
         </Card>
 
-        <Card background="black" elevation="none">
-          <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
+        {/* Total Sites Card */}
+        <Card background="black" elevation="none" height="xsmall">
+          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">
                 <Location color="light-1" />
-                <Text color="light-1">Total Sites</Text>
+                <Text color="light-1" size="small">Total Sites</Text>
               </Box>
               <Button
                 plain
@@ -104,19 +114,20 @@ const Summary = () => {
               />
             </Box>
           </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Text size="xxlarge" weight="bold" color="light-1">
+          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
+            <Text size="xlarge" weight="bold" color="light-1">
               {stats.sites}
             </Text>
           </CardBody>
         </Card>
 
-        <Card background="black" elevation="none">
-          <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
+        {/* Questions Card */}
+        <Card background="black" elevation="none" height="xsmall">
+          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">
                 <Help color="light-1" />
-                <Text color="light-1">Questions</Text>
+                <Text color="light-1" size="small">Questions</Text>
               </Box>
               <Button
                 plain
@@ -125,19 +136,20 @@ const Summary = () => {
               />
             </Box>
           </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Text size="xxlarge" weight="bold" color="light-1">
+          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
+            <Text size="xlarge" weight="bold" color="light-1">
               {stats.questions}
             </Text>
           </CardBody>
         </Card>
 
-        <Card background="status-warning" elevation="none">
-          <CardHeader pad={{ horizontal: 'medium', top: 'medium' }}>
+        {/* Total Ratings Card */}
+        <Card background="status-warning" elevation="none" height="xsmall">
+          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Box direction="row" gap="small" align="center">
                 <Star color="light-1" />
-                <Text color="light-1">Total Ratings</Text>
+                <Text color="light-1" size="small">Total Ratings</Text>
               </Box>
               <Button
                 plain
@@ -146,20 +158,25 @@ const Summary = () => {
               />
             </Box>
           </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Text size="xxlarge" weight="bold" color="light-1">
+          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
+            <Text size="xlarge" weight="bold" color="light-1">
               {stats.totalFeedbacks}
             </Text>
           </CardBody>
         </Card>
       </Grid>
 
-      <Grid columns={["2/3", "1/3"]} gap="medium">
-        {/* Overall Rating - Now in a 2/3 column */}
+      {/* Bottom Section - Better layout for details */}
+      <Grid
+        columns={["2/3", "1/3"]}
+        gap="medium"
+        fill="horizontal"
+      >
+        {/* Overall Rating Card */}
         <Card background="dark-1" elevation="none">
-          <CardHeader pad="medium">
+          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
             <Box direction="row" justify="between" align="center" fill>
-              <Text color="light-1" weight="bold">Overall Rating</Text>
+              <Text color="light-1" weight="bold" size="small">Overall Rating</Text>
               <Button
                 plain
                 icon={<LinkNext size="small" color="light-3" />}
@@ -168,11 +185,17 @@ const Summary = () => {
             </Box>
           </CardHeader>
           <CardBody pad="medium">
-            <Box direction="row" gap="large" align="center">
+            <Box
+              direction="row-responsive"
+              gap="large"
+              align="center"
+              justify="start"
+              height={{ min: "small" }}
+            >
               <Stack anchor="center">
                 <Meter
                   type="circle"
-                  size="medium"
+                  size="small"
                   thickness="small"
                   values={[{
                     value: (stats.overallRating / 5) * 100,
@@ -180,7 +203,7 @@ const Summary = () => {
                   }]}
                 />
                 <Box align="center">
-                  <Text size="xlarge" weight="bold" color="light-1">
+                  <Text size="large" weight="bold" color="light-1">
                     {stats.overallRating.toFixed(1)}
                   </Text>
                   <Box direction="row" gap="xxsmall">
@@ -203,12 +226,13 @@ const Summary = () => {
           </CardBody>
         </Card>
 
-        {/* Status Rings - Now in a 1/3 column */}
+        {/* Status Cards */}
         <Box gap="medium">
+          {/* User Status Card */}
           <Card background="dark-1" elevation="none">
-            <CardHeader pad="medium">
+            <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
               <Box direction="row" justify="between" align="center" fill>
-                <Text color="light-1">User Status</Text>
+                <Text color="light-1" size="small">User Status</Text>
                 <Button
                   plain
                   icon={<LinkNext size="small" color="light-3" />}
@@ -220,7 +244,7 @@ const Summary = () => {
               <Stack anchor="center">
                 <Meter
                   type="circle"
-                  size="small"
+                  size="xsmall"
                   thickness="small"
                   values={[{
                     value: (stats.activeUsers / stats.users) * 100,
@@ -228,19 +252,20 @@ const Summary = () => {
                   }]}
                 />
                 <Box align="center">
-                  <Text weight="bold" size="large" color="light-1">
+                  <Text weight="bold" size="medium" color="light-1">
                     {stats.activeUsers}
                   </Text>
-                  <Text size="small" color="light-3">Active</Text>
+                  <Text size="xsmall" color="light-3">Active</Text>
                 </Box>
               </Stack>
             </CardBody>
           </Card>
 
+          {/* Site Status Card */}
           <Card background="dark-1" elevation="none">
-            <CardHeader pad="medium">
+            <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
               <Box direction="row" justify="between" align="center" fill>
-                <Text color="light-1">Site Status</Text>
+                <Text color="light-1" size="small">Site Status</Text>
                 <Button
                   plain
                   icon={<LinkNext size="small" color="light-3" />}
@@ -252,7 +277,7 @@ const Summary = () => {
               <Stack anchor="center">
                 <Meter
                   type="circle"
-                  size="small"
+                  size="xsmall"
                   thickness="small"
                   values={[{
                     value: (stats.activeSites / stats.sites) * 100,
@@ -260,10 +285,10 @@ const Summary = () => {
                   }]}
                 />
                 <Box align="center">
-                  <Text weight="bold" size="large" color="light-1">
+                  <Text weight="bold" size="medium" color="light-1">
                     {stats.activeSites}
                   </Text>
-                  <Text size="small" color="light-3">Active</Text>
+                  <Text size="xsmall" color="light-3">Active</Text>
                 </Box>
               </Stack>
             </CardBody>

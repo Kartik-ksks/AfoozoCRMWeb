@@ -19,11 +19,21 @@ const Sidebar = ({ showSidebar, background }) => {
       elevation="large"
       direction={isMobile ? 'row' : 'column'}
       width={isMobile ? 'full' : !['xsmall', 'small'].includes(size) ? 'medium' : undefined}
-      height={isMobile ? 'xsmall' : 'full'}
-      overflow={isMobile ? 'auto' : undefined}
-    // fill="vertical"
+      height={isMobile ? 'auto' : 'full'}
+      overflow="visible"
+      style={{
+        position: isMobile ? 'fixed' : 'relative',
+        bottom: isMobile ? 0 : 'auto',
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+      }}
     >
-      <Box fill>
+      <Box
+        fill
+        overflow={isMobile ? 'visible' : 'auto'}
+        height={isMobile ? 'auto' : 'full'}
+      >
         {!isMobile && <SidebarHeader
           name={client?.session?.username}
           email={client?.session?.email}
