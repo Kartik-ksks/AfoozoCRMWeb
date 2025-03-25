@@ -112,7 +112,7 @@ const FeedbackForm = () => {
                     ...prev,
                     questions: response.map(q => ({
                         questionId: q.QuestionId,
-                        answer: '',
+                        answer: q.QuestionType === 'rating' ? 5 : '',
                         comment: ''
                     }))
                 }));
@@ -186,7 +186,7 @@ const FeedbackForm = () => {
                 email: '',
                 questions: questions.map(q => ({
                     questionId: q.QuestionId,
-                    answer: '',
+                    answer: q.QuestionType === 'rating' ? 5 : '',
                     comment: ''
                 })),
                 comment: '',
