@@ -12,7 +12,7 @@ import {
 } from 'grommet';
 import { Download } from 'grommet-icons';
 import { CoverPage } from '../../../components';
-import { SessionContext, useMonitor } from '../../../context/session';
+import { SessionContext } from '../../../context/session';
 
 const ChecklistSubmissions = () => {
   const { client } = useContext(SessionContext);
@@ -23,65 +23,70 @@ const ChecklistSubmissions = () => {
     startDate: '',
     endDate: '',
   });
-  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  useMonitor(
-    client,
-    ['/api/sites'],
-    ({ ['/api/sites']: siteData }) => {
-      if (siteData) {
-        setSites(siteData.map(site => ({
-          label: site.SiteName,
-          value: site.SiteId.toString(),
-        })));
-      }
-    },
-    [reloadTrigger]
-  );
-
+  // Fetch sites for dropdown
   useEffect(() => {
-    fetchSubmissions();
-  }, [filters]);
+    const fetchSites = async () => {
+      try {
+        const response = await client.get('/api/sites');
+        setSites(response.map(site => ({
+          label: site.SiteName,
+          value: site.SiteId
+        })));
+      } catch (error) {
+        console.error('Error fetching sites:', error);
+      }
+    };
+    fetchSites();
+  }, [client]);
 
   const fetchSubmissions = async () => {
     try {
+      setLoading(true);
       const queryParams = new URLSearchParams();
-      if (filters.siteId) queryParams.append('siteId', filters.siteId?.value);
-      if (filters.startDate) queryParams.append('startDate', filters.startDate);
-      if (filters.endDate) queryParams.append('endDate', filters.endDate);
+
+      if (filters.siteId) {
+        queryParams.append('siteId', filters.siteId.value || filters.siteId);
+      }
+      if (filters.startDate) {
+        const startDate = new Date(filters.startDate).toISOString().split('T')[0];
+        queryParams.append('startDate', startDate);
+      }
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate).toISOString().split('T')[0];
+        queryParams.append('endDate', endDate);
+      }
 
       const response = await client.get(`/api/checklist/filters?${queryParams}`);
-      console.log(response)
-      setSubmissions(response.data || []);
+
+      // Transform the response data to match the new format
+      const transformedData = response.map(submission => ({
+        id: submission.id || submission.responseId,
+        siteName: submission.siteName || 'N/A',
+        categoryName: submission.categoryName || 'N/A',
+        question: submission.question || 'N/A',
+        userName: submission.userName || 'N/A',
+        completedDate: submission.completedDate ||
+          (submission.responseDate ? new Date(submission.responseDate).toLocaleString() : 'N/A'),
+        status: submission.status || (submission.done ? 'completed' : 'pending'),
+        imageUrl: submission.imageUrl || null,
+        comment: submission.comment || '',
+        // Additional fields
+        responseId: submission.responseId,
+        itemId: submission.itemId,
+        userId: submission.userId,
+        done: submission.done,
+        responseDate: submission.responseDate
+      }));
+
+      setSubmissions(transformedData);
     } catch (error) {
       console.error('Error fetching submissions:', error);
       setSubmissions([]);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const exportToPDF = async (submissionId) => {
-    try {
-      const response = await client.get(`/api/checklist/export/${submissionId}`, {
-        responseType: 'blob'
-      });
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `checklist-${submissionId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-    }
-  };
-
-  const handleReload = () => {
-    setLoading(true);
-    setReloadTrigger(prev => prev + 1);
-    fetchSubmissions();
   };
 
   const columns = [
@@ -91,99 +96,104 @@ const ChecklistSubmissions = () => {
       primary: true,
     },
     {
+      property: 'categoryName',
+      header: 'Category',
+    },
+    {
+      property: 'question',
+      header: 'Question',
+    },
+    {
       property: 'userName',
       header: 'User',
     },
     {
       property: 'completedDate',
       header: 'Completed Date',
-      render: datum => datum.completedDate ? new Date(datum.completedDate).toLocaleString() : '-',
     },
     {
       property: 'status',
       header: 'Status',
       render: datum => (
         <Text color={datum.status === 'completed' ? 'status-ok' : 'status-warning'}>
-          {datum.status || 'pending'}
+          {datum.status}
         </Text>
       ),
     },
     {
-      property: 'actions',
-      header: 'Actions',
-      render: datum => (
+      property: 'imageUrl',
+      header: 'Image',
+      render: datum => datum.imageUrl ? (
         <Button
           icon={<Download />}
-          onClick={() => exportToPDF(datum.id)}
-          tip="Export to PDF"
+          onClick={() => window.open(datum.imageUrl, '_blank')}
+          tip="View Image"
           plain
-          disabled={datum.status !== 'completed'}
         />
-      ),
+      ) : '-',
+    },
+    {
+      property: 'comment',
+      header: 'Comment',
+      render: datum => datum.comment || '-',
     },
   ];
 
   return (
-    <CoverPage title="Checklist Submissions">
-      <Box pad="medium" gap="medium">
-        <Card background="dark-1">
-          <CardHeader pad="medium">
-            <Text weight="bold">Filters</Text>
-          </CardHeader>
-          <CardBody pad="medium">
-            <Box direction="row" gap="medium">
-              <Select
-                placeholder="Select Site"
-                options={sites || []}
-                labelKey="label"
-                valueKey="value"
-                value={filters.siteId}
-                onChange={({ value }) => setFilters(prev => ({ ...prev, siteId: value }))}
-                clear
-              />
-              <DateInput
-                format="mm/dd/yyyy"
-                value={filters.startDate}
-                onChange={({ value }) => setFilters(prev => ({ ...prev, startDate: value }))}
-                placeholder="Start Date"
-              />
-              <DateInput
-                format="mm/dd/yyyy"
-                value={filters.endDate}
-                onChange={({ value }) => setFilters(prev => ({ ...prev, endDate: value }))}
-                placeholder="End Date"
-              />
-            </Box>
-          </CardBody>
-        </Card>
+    <Box pad="medium" gap="medium">
+      <Card background="dark-1">
+        <CardHeader pad="medium">
+          <Text weight="bold">Filters</Text>
+        </CardHeader>
+        <CardBody pad="medium">
+          <Box direction="row" gap="medium" align="center">
+            <Select
+              placeholder="Select Site"
+              options={sites}
+              labelKey="label"
+              valueKey="value"
+              value={filters.siteId}
+              onChange={({ option }) => setFilters(prev => ({ ...prev, siteId: option.value }))}
+              clear
+            />
+            <DateInput
+              format="mm/dd/yyyy"
+              value={filters.startDate}
+              onChange={({ value }) => setFilters(prev => ({ ...prev, startDate: value }))}
+              placeholder="Start Date"
+            />
+            <DateInput
+              format="mm/dd/yyyy"
+              value={filters.endDate}
+              onChange={({ value }) => setFilters(prev => ({ ...prev, endDate: value }))}
+              placeholder="End Date"
+            />
+            <Button
+              primary
+              label="Search"
+              onClick={fetchSubmissions}
+              disabled={loading}
+            />
+          </Box>
+        </CardBody>
+      </Card>
 
-        <Box direction="row" justify="end" margin={{ bottom: 'small' }}>
-          <Button
-            secondary
-            color="status-critical"
-            label="Reload"
-            onClick={handleReload}
-            disabled={loading}
-          />
-        </Box>
-
-        <DataTable
-          columns={columns}
-          data={submissions}
-          background={{
-            header: 'dark-2',
-            body: ['dark-1', 'dark-2'],
-          }}
-          border
-          pad="small"
-          placeholder={
-            <Box pad="medium" align="center">
-              <Text color="text-weak">No submissions found</Text>
-            </Box>
-          }
-        />
-      </Box>
-    </CoverPage>
+      <DataTable
+        columns={columns}
+        data={submissions}
+        background={{
+          header: 'dark-2',
+          body: ['dark-1', 'dark-2'],
+        }}
+        border
+        pad="small"
+        placeholder={
+          <Box pad="medium" align="center">
+            <Text color="text-weak">No submissions found</Text>
+          </Box>
+        }
+      />
+    </Box>
   );
 };
 

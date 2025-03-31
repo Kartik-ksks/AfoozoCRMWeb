@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -13,11 +13,11 @@ import {
   FormField,
   TextInput,
   TextArea,
-  Select,
+  SelectMultiple,
 } from 'grommet';
 import { More, Edit, Trash, Add } from 'grommet-icons';
 import { ConfirmOperation, LoadingLayer } from '../../../components';
-import { SessionContext, useMonitor } from '../../../context/session';
+import { SessionContext } from '../../../context/session';
 import { FilteredDataTable } from '../../../components/dataTable';
 
 const CategoryForm = ({ title }) => {
@@ -28,64 +28,95 @@ const CategoryForm = ({ title }) => {
   const [editCategory, setEditCategory] = useState(null);
   const [deleteCategory, setDeleteCategory] = useState(null);
   const [formValues, setFormValues] = useState({
-    SiteId: '',
+    SiteIds: [],
     CategoryName: '',
     Description: '',
   });
   const [sites, setSites] = useState([]);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  useMonitor(
-    client,
-    ['/api/checklist/categories', '/api/sites'],
-    ({
-      ['/api/checklist/categories']: categories,
-      ['/api/sites']: siteData,
-    }) => {
-      if (categories) {
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        const response = await client.rawGet('/api/sites');
+        const sitesData = await response.json();
+        const formattedSites = sitesData.map(site => ({
+          value: site.SiteId.toString(),
+          label: site.SiteName,
+          original: site
+        }));
+        setSites(formattedSites);
+      } catch (error) {
+        console.error('Error fetching sites:', error);
+      }
+    };
+
+    fetchSites();
+  }, [client, reloadTrigger]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await client.rawGet('/api/checklist/categories');
+        const categories = await response.json();
+
         const transformedCategories = categories.map(category => ({
           ...category,
-          SiteName: siteData?.find(site => site.SiteId === category.SiteId)?.SiteName || 'Unknown Site'
+          SiteNames: category.SiteIds
+            ?.map(siteId => {
+              const site = sites.find(s => s.value === siteId.toString());
+              return site?.label;
+            })
+            .filter(Boolean)
+            .join(', ') || 'No Sites'
         }));
+
         setData(transformedCategories);
-      }
-      if (siteData) {
-        setSites(siteData.map(site => ({
-          SiteId: site.SiteId,
-          SiteName: site.SiteName
-        })));
-      }
-      if (categories && siteData) {
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
         setLoading(false);
       }
-    },
-    [reloadTrigger]
-  );
+    };
+
+    if (sites.length > 0) {
+      fetchCategories();
+    }
+  }, [client, reloadTrigger, sites]);
 
   const formContent = (
-    <Form value={formValues} onChange={setFormValues}>
+    <Form
+      value={formValues}
+      onChange={nextValue => setFormValues(nextValue)}
+      onSubmit={({ value }) => console.log(value)}
+    >
       <Box gap="medium">
-        <FormField name="SiteId" label="Site" required>
-          <Select
-            name="SiteId"
+        <FormField name="SiteIds" label="Sites" required>
+          <SelectMultiple
+            name="SiteIds"
+            closeOnChange={false}
+            placeholder="Select sites"
             options={sites}
-            labelKey="SiteName"
-            valueKey="SiteId"
-            value={formValues.SiteId}
+            labelKey="label"
+            valueKey={{ key: "value", reduce: true }}
+            value={formValues.SiteIds}
             onChange={({ value }) => {
               setFormValues(prev => ({
                 ...prev,
-                SiteId: value.SiteId
+                SiteIds: value
               }));
             }}
           />
         </FormField>
+
         <FormField name="CategoryName" label="Category Name" required>
           <TextInput
             name="CategoryName"
             value={formValues.CategoryName}
           />
         </FormField>
+
         <FormField name="Description" label="Description">
           <TextArea
             name="Description"
@@ -100,7 +131,7 @@ const CategoryForm = ({ title }) => {
     { property: 'CategoryId', header: 'ID', primary: true },
     { property: 'CategoryName', header: 'Category Name' },
     { property: 'Description', header: 'Description' },
-    { property: 'SiteName', header: 'Site' },
+    { property: 'SiteNames', header: 'Sites' },
     {
       property: 'actions',
       header: 'Actions',
@@ -115,7 +146,7 @@ const CategoryForm = ({ title }) => {
               onClick: () => {
                 setEditCategory(datum);
                 setFormValues({
-                  SiteId: datum.SiteId,
+                  SiteIds: datum.SiteIds || [],
                   CategoryName: datum.CategoryName,
                   Description: datum.Description,
                 });
@@ -132,47 +163,68 @@ const CategoryForm = ({ title }) => {
     }
   ];
 
+  const handleReload = () => {
+    setReloadTrigger(prev => prev + 1);
+  };
+
   const handleAdd = async () => {
     try {
-      // const payload = {
-      //   ...formValues,
-      //   SiteId: parseInt(formValues.SiteId, 10),
-      // };
       setLoading(true);
+      const submitData = {
+        ...formValues,
+        SiteIds: formValues.SiteIds.map(id => parseInt(id, 10))
+      };
+      await client.post('/api/admin/checklist/categories', submitData);
+      setReloadTrigger(prev => prev + 1);
       setAddCategory(false);
-      return client.post('/api/admin/checklist/categories', formValues);
+      setFormValues({
+        SiteIds: [],
+        CategoryName: '',
+        Description: '',
+      });
+      return true;
     } catch (error) {
       console.error('Error adding category:', error);
+      setLoading(false);
+      return false;
     }
   };
 
   const handleEdit = async () => {
     try {
-      // const payload = {
-      //   ...formValues,
-      //   SiteId: parseInt(formValues.SiteId, 10),
-      // };
       setLoading(true);
+      const submitData = {
+        ...formValues,
+        SiteIds: formValues.SiteIds.map(id => parseInt(id, 10))
+      };
+      await client.put(`/api/admin/checklist/categories/${editCategory.CategoryId}`, submitData);
+      setReloadTrigger(prev => prev + 1);
       setEditCategory(null);
-      return client.put(`/api/admin/checklist/categories/${editCategory.CategoryId}`, formValues);
+      setFormValues({
+        SiteIds: [],
+        CategoryName: '',
+        Description: '',
+      });
+      return true;
     } catch (error) {
       console.error('Error updating category:', error);
+      setLoading(false);
+      return false;
     }
   };
 
   const handleDelete = async () => {
     try {
       setLoading(true);
+      await client.delete(`/api/admin/checklist/categories/${deleteCategory.CategoryId}`);
+      setReloadTrigger(prev => prev + 1);
       setDeleteCategory(null);
-      return client.delete(`/admin/checklist/categories/${deleteCategory.CategoryId}`);
+      return true;
     } catch (error) {
       console.error('Error deleting category:', error);
+      setLoading(false);
+      return false;
     }
-  };
-
-  const handleReload = () => {
-    setLoading(true);
-    setReloadTrigger(prev => prev + 1);
   };
 
   return (
@@ -195,31 +247,28 @@ const CategoryForm = ({ title }) => {
             onClick={() => setAddCategory(true)}
             primary
             color="status-critical"
+            disabled={loading}
           />
         </Box>
       </Box>
 
-      {loading ? (
-        <LoadingLayer />
-      ) : (
-        <Box>
-          <Data data={data}>
-            <Toolbar>
-              <DataSearch />
-              <Box flex />
-              <Button
-                secondary
-                color="status-critical"
-                label="Reload"
-                onClick={handleReload}
-                disabled={loading}
-              />
-            </Toolbar>
-            <DataSummary />
-            <FilteredDataTable columns={columns} />
-          </Data>
-        </Box>
-      )}
+      <Box>
+        <Data data={data}>
+          <Toolbar>
+            <DataSearch />
+            <Box flex />
+            <Button
+              secondary
+              color="status-critical"
+              label="Reload"
+              onClick={handleReload}
+              disabled={loading}
+            />
+          </Toolbar>
+          <DataSummary />
+          <FilteredDataTable columns={columns} />
+        </Data>
+      </Box>
 
       {addCategory && (
         <ConfirmOperation
@@ -229,19 +278,14 @@ const CategoryForm = ({ title }) => {
           onClose={() => {
             setAddCategory(false);
             setFormValues({
-              SiteId: '',
+              SiteIds: [],
               CategoryName: '',
               Description: '',
             });
           }}
-          onSuccess={() => {
-            setLoading(true);
-            setAddCategory(false);
-          }}
           yesPrompt="Add"
           noPrompt="Cancel"
           estimatedTime={5}
-          progressLabel="Adding new Checklist Category"
         />
       )}
 
@@ -253,14 +297,10 @@ const CategoryForm = ({ title }) => {
           onClose={() => {
             setEditCategory(null);
             setFormValues({
-              SiteId: '',
+              SiteIds: [],
               CategoryName: '',
               Description: '',
             });
-          }}
-          onSuccess={() => {
-            setLoading(true);
-            setEditCategory(null);
           }}
           yesPrompt="Save"
           noPrompt="Cancel"
@@ -274,10 +314,6 @@ const CategoryForm = ({ title }) => {
           text={`Are you sure you want to delete "${deleteCategory.CategoryName}"?`}
           onConfirm={handleDelete}
           onClose={() => setDeleteCategory(null)}
-          onSuccess={() => {
-            setLoading(true);
-            setDeleteCategory(null);
-          }}
           yesPrompt="Delete"
           noPrompt="Cancel"
           estimatedTime={5}

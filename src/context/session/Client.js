@@ -565,6 +565,7 @@ class AfoozoClient {
    * Delete our cached session and event connection.
    */
   rmSession = () => {
+    console.log('rmSession');
     this.session = null;
     config.sessionStorage.removeItem('session-token');
     config.sessionStorage.removeItem('session-uri');

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -17,7 +17,7 @@ import {
 } from 'grommet';
 import { More, Edit, Trash, Add } from 'grommet-icons';
 import { ConfirmOperation, LoadingLayer } from '../../../components';
-import { SessionContext, useMonitor } from '../../../context/session';
+import { SessionContext } from '../../../context/session';
 import { FilteredDataTable } from '../../../components/dataTable';
 
 const CategoryForm = ({ title }) => {
@@ -35,32 +35,38 @@ const CategoryForm = ({ title }) => {
   const [sites, setSites] = useState([]);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  useMonitor(
-    client,
-    ['/api/checklist/categories', '/api/sites'],
-    ({
-      ['/api/checklist/categories']: categories,
-      ['/api/sites']: siteData,
-    }) => {
-      if (categories) {
-        const transformedCategories = categories.map(category => ({
-          ...category,
-          SiteName: siteData?.find(site => site.SiteId === category.SiteId)?.SiteName || 'Unknown Site'
-        }));
-        setData(transformedCategories);
-      }
-      if (siteData) {
-        setSites(siteData.map(site => ({
-          SiteId: site.SiteId,
-          SiteName: site.SiteName
-        })));
-      }
-      if (categories && siteData) {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [categoriesResponse, sitesResponse] = await Promise.all([
+          client.get('/api/checklist/categories'),
+          client.get('/api/sites')
+        ]);
+
+        if (sitesResponse) {
+          setSites(sitesResponse.map(site => ({
+            SiteId: site.SiteId,
+            SiteName: site.SiteName
+          })));
+        }
+
+        if (categoriesResponse) {
+          const transformedCategories = categoriesResponse.map(category => ({
+            ...category,
+            SiteName: sitesResponse?.find(site => site.SiteId === category.SiteId)?.SiteName || 'Unknown Site'
+          }));
+          setData(transformedCategories);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
         setLoading(false);
       }
-    },
-    [reloadTrigger]
-  );
+    };
+
+    fetchData();
+  }, [client, reloadTrigger]);
 
   const formContent = (
     <Form value={formValues} onChange={setFormValues}>
@@ -132,47 +138,61 @@ const CategoryForm = ({ title }) => {
     }
   ];
 
+  const handleReload = () => {
+    setLoading(true);
+    setReloadTrigger(prev => prev + 1);
+  };
+
   const handleAdd = async () => {
     try {
-      // const payload = {
-      //   ...formValues,
-      //   SiteId: parseInt(formValues.SiteId, 10),
-      // };
       setLoading(true);
+      await client.post('/api/admin/checklist/categories', formValues);
+      handleReload();
       setAddCategory(false);
-      return client.post('/api/admin/checklist/categories', formValues);
+      setFormValues({
+        SiteId: '',
+        CategoryName: '',
+        Description: '',
+      });
+      return true;
     } catch (error) {
       console.error('Error adding category:', error);
+      setLoading(false);
+      return false;
     }
   };
 
   const handleEdit = async () => {
     try {
-      // const payload = {
-      //   ...formValues,
-      //   SiteId: parseInt(formValues.SiteId, 10),
-      // };
       setLoading(true);
+      await client.put(`/api/admin/checklist/categories/${editCategory.CategoryId}`, formValues);
+      handleReload();
       setEditCategory(null);
-      return client.put(`/api/admin/checklist/categories/${editCategory.CategoryId}`, formValues);
+      setFormValues({
+        SiteId: '',
+        CategoryName: '',
+        Description: '',
+      });
+      return true;
     } catch (error) {
       console.error('Error updating category:', error);
+      setLoading(false);
+      return false;
     }
   };
 
   const handleDelete = async () => {
     try {
       setLoading(true);
+      await client.delete(`/api/admin/checklist/categories/${deleteCategory.CategoryId}`);
+      handleReload();
       setDeleteCategory(null);
-      return client.delete(`/admin/checklist/categories/${deleteCategory.CategoryId}`);
+      return true;
     } catch (error) {
       console.error('Error deleting category:', error);
+      setLoading(false);
+      return false;
     }
-  };
-
-  const handleReload = () => {
-    setLoading(true);
-    setReloadTrigger(prev => prev + 1);
   };
 
   return (
@@ -195,31 +215,28 @@ const CategoryForm = ({ title }) => {
             onClick={() => setAddCategory(true)}
             primary
             color="status-critical"
+            disabled={loading}
           />
         </Box>
       </Box>
 
-      {loading ? (
-        <LoadingLayer />
-      ) : (
-        <Box>
-          <Data data={data}>
-            <Toolbar>
-              <DataSearch />
-              <Box flex />
-              <Button
-                secondary
-                color="status-critical"
-                label="Reload"
-                onClick={handleReload}
-                disabled={loading}
-              />
-            </Toolbar>
-            <DataSummary />
-            <FilteredDataTable columns={columns} />
-          </Data>
-        </Box>
-      )}
+      <Box>
+        <Data data={data}>
+          <Toolbar>
+            <DataSearch />
+            <Box flex />
+            <Button
+              secondary
+              color="status-critical"
+              label="Reload"
+              onClick={handleReload}
+              disabled={loading}
+            />
+          </Toolbar>
+          <DataSummary />
+          <FilteredDataTable columns={columns} />
+        </Data>
+      </Box>
 
       {addCategory && (
         <ConfirmOperation
@@ -233,10 +250,6 @@ const CategoryForm = ({ title }) => {
               CategoryName: '',
               Description: '',
             });
-          }}
-          onSuccess={() => {
-            setLoading(true);
-            setAddCategory(false);
           }}
           yesPrompt="Add"
           noPrompt="Cancel"
@@ -258,10 +271,6 @@ const CategoryForm = ({ title }) => {
               Description: '',
             });
           }}
-          onSuccess={() => {
-            setLoading(true);
-            setEditCategory(null);
-          }}
           yesPrompt="Save"
           noPrompt="Cancel"
           estimatedTime={5}
@@ -274,10 +283,6 @@ const CategoryForm = ({ title }) => {
           text={`Are you sure you want to delete "${deleteCategory.CategoryName}"?`}
           onConfirm={handleDelete}
           onClose={() => setDeleteCategory(null)}
-          onSuccess={() => {
-            setLoading(true);
-            setDeleteCategory(null);
-          }}
           yesPrompt="Delete"
           noPrompt="Cancel"
           estimatedTime={5}
