@@ -14,7 +14,9 @@ const MultiLevelMenu = ({ menu, compact }) => {
     if (hasItems && !compact) {
       e.preventDefault();
       setIsOpen(!isOpen);
-      navigate(`/${menu.path}`);
+      if (menu.path) {
+        navigate(`/${menu.path}`);
+      }
     } else if (menu.path) {
       navigate(`/${menu.path}`);
     }
@@ -78,18 +80,33 @@ const MultiLevelMenu = ({ menu, compact }) => {
           {menu.items.map((item) => (
             <Box
               key={item.path || item.title}
-              border={{
-                side: 'left',
-                color: 'rgba(255, 255, 255, 0.2)',
-                size: '2px'
-              }}
-              margin={{ left: 'medium' }}
-              background="rgba(0, 0, 0, 0.1)"
+              direction="row"
+              align="center"
             >
-              <MultiLevelMenu
-                menu={item}
-                compact={compact}
-              />
+              <RoutedButton
+                path={item.path}
+                onClick={() => navigate(`/${item.path}`)}
+                hoverIndicator
+                plain
+                fill
+              >
+                <Box
+                  direction="row"
+                  align="center"
+                  pad={{ horizontal: 'small', vertical: 'xsmall' }}
+                  height="40px"
+                  border={{ side: 'bottom', color: 'rgba(255, 255, 255, 0.1)', size: '1px' }}
+                  background="rgba(0, 0, 0, 0.1)"
+                >
+                  <Box basis="8px" />
+                  <Box basis="32px" flex={false} justify="center">
+                    {item.Icon || null}
+                  </Box>
+                  <Text size="small" weight="normal">
+                    {item.title}
+                  </Text>
+                </Box>
+              </RoutedButton>
             </Box>
           ))}
         </Box>

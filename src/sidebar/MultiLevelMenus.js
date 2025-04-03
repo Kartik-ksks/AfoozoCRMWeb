@@ -13,17 +13,18 @@ const MultiLevelMenus = ({ menus = [], compact }) => {
     <Box
       fill="vertical"
       overflow="auto"
-      direction={compact ? 'row' : 'column'}
-      wrap={compact}
-      align={compact ? 'center' : 'start'}
-      justify={compact ? 'center' : 'start'}
-      pad={{ left: 'medium', top:'small' }}
+      direction={'column'}
+      // wrap={compact}
+      align={'start'}
+      justify={'start'}
+      pad={{ top: 'small' }}
+      width="100%"
     >
       {menus.map((menu) => (
         <MultiLevelMenu
           key={menu.path || menu.title}
           menu={menu}
-          compact={compact}
+          compact={false}
         />
       ))}
     </Box>
@@ -32,10 +33,10 @@ const MultiLevelMenus = ({ menus = [], compact }) => {
 
 MultiLevelMenus.propTypes = {
   menus: PropTypes.arrayOf(PropTypes.shape({
-      title: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
     path: PropTypes.string,
     Icon: PropTypes.node,
-      items: PropTypes.array,
+    items: PropTypes.array,
   })),
   compact: PropTypes.bool,
 };
