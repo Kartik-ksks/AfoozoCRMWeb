@@ -1,48 +1,74 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Avatar, Text, TextEmphasis, Button } from 'grommet';
+import { Box, Avatar, Text, TextEmphasis, Button, Layer } from 'grommet';
+import { Close } from 'grommet-icons';
 import { ResponsiveContext } from '../context/responsive';
 import { SessionContext } from '../context/session';
 import MultiLevelSidebar from './MultiLevelSidebar';
 
-const Sidebar = ({ showSidebar, background }) => {
+const Sidebar = ({ showSidebar, background, setShowSidebar, isMobile }) => {
   const { isBreakSidebar, size } = useContext(ResponsiveContext);
   const { userRole, client } = useContext(SessionContext);
-  const isMobile = isBreakSidebar();
+  const isBreak = isBreakSidebar();
 
   if (!showSidebar || !userRole) return null;
 
-  return (
+  const sidebarContent = (
     <Box
       flex={false}
       background={background || 'neutral-2'}
       elevation="large"
-      direction={isMobile ? 'row' : 'column'}
-      width={isMobile ? 'full' : !['xsmall', 'small'].includes(size) ? 'medium' : undefined}
-      height={isMobile ? 'auto' : 'full'}
+      direction={isBreak ? 'column' : 'column'}
+      width={isBreak ? '85vw' : !['xsmall', 'small'].includes(size) ? 'medium' : undefined}
+      height={isBreak ? '100vh' : 'full'}
       overflow="visible"
-      style={{
-        position: isMobile ? 'fixed' : 'relative',
-        bottom: isMobile ? 0 : 'auto',
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-      }}
     >
+      {isMobile && setShowSidebar && (
+        <Box 
+          align="end" 
+          pad="small"
+          flex={false}
+          background={background || 'neutral-2'}
+        >
+          <Button 
+            icon={<Close />} 
+            onClick={() => setShowSidebar(false)}
+            a11yTitle="Close sidebar" 
+          />
+        </Box>
+      )}
       <Box
         fill
-        overflow={isMobile ? 'visible' : 'auto'}
-        height={isMobile ? 'auto' : 'full'}
+        overflow="auto"
+        className="scroll-enabled"
+        height="full"
       >
-        {!isMobile && <SidebarHeader
+        {!isBreak && <SidebarHeader
           name={client?.session?.username}
           email={client?.session?.email}
           role={client?.session?.role}
         />}
-        <MultiLevelSidebar compact={isMobile} />
+        <MultiLevelSidebar compact={isBreak} />
       </Box>
     </Box>
   );
+
+  if (isMobile) {
+    return (
+      <Layer
+        position="left"
+        full="vertical"
+        modal={true}
+        onClickOutside={() => setShowSidebar(false)}
+        onEsc={() => setShowSidebar(false)}
+        animation="slide"
+      >
+        {sidebarContent}
+      </Layer>
+    );
+  }
+
+  return sidebarContent;
 };
 
 const SidebarHeader = ({ email, name, role }) => (
@@ -71,6 +97,8 @@ const SidebarHeader = ({ email, name, role }) => (
 Sidebar.propTypes = {
   showSidebar: PropTypes.bool,
   background: PropTypes.string,
+  setShowSidebar: PropTypes.func,
+  isMobile: PropTypes.bool
 };
 
 export default Sidebar;

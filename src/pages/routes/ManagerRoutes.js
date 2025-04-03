@@ -10,7 +10,7 @@ import Accounts from "../user/accounts/Accounts";
 export default function ManagerRoutes() {
     return (
         <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<ChecklistManagement />} />
             <Route path="/masters/:master" element={<Masters />} />
             <Route path="/masters" element={<Masters />} />
             <Route path="/feedback" element={<Feedback />} />

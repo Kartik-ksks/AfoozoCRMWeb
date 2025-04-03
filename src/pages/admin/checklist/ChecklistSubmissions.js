@@ -6,12 +6,11 @@ import {
   CardBody,
   Text,
   DataTable,
-  Select,
   DateInput,
   Button,
+  Select,
 } from 'grommet';
-import { Download } from 'grommet-icons';
-import { CoverPage } from '../../../components';
+import { Image } from 'grommet-icons';
 import { SessionContext } from '../../../context/session';
 
 const ChecklistSubmissions = () => {
@@ -21,7 +20,6 @@ const ChecklistSubmissions = () => {
   const [filters, setFilters] = useState({
     siteId: '',
     startDate: '',
-    endDate: '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -49,13 +47,10 @@ const ChecklistSubmissions = () => {
       if (filters.siteId) {
         queryParams.append('siteId', filters.siteId.value || filters.siteId);
       }
+
       if (filters.startDate) {
         const startDate = new Date(filters.startDate).toISOString().split('T')[0];
         queryParams.append('startDate', startDate);
-      }
-      if (filters.endDate) {
-        const endDate = new Date(filters.endDate).toISOString().split('T')[0];
-        queryParams.append('endDate', endDate);
       }
 
       const response = await client.get(`/api/checklist/filters?${queryParams}`);
@@ -67,8 +62,9 @@ const ChecklistSubmissions = () => {
         categoryName: submission.categoryName || 'N/A',
         question: submission.question || 'N/A',
         userName: submission.userName || 'N/A',
-        completedDate: submission.completedDate ||
-          (submission.responseDate ? new Date(submission.responseDate).toLocaleString() : 'N/A'),
+        completedDate: submission.completedDate
+          ? new Date(submission.completedDate).toLocaleDateString()
+          : (submission.responseDate ? new Date(submission.responseDate).toLocaleDateString() : 'N/A'),
         status: submission.status || (submission.done ? 'completed' : 'pending'),
         imageUrl: submission.imageUrl || null,
         comment: submission.comment || '',
@@ -91,29 +87,20 @@ const ChecklistSubmissions = () => {
 
   const columns = [
     {
-      property: 'siteName',
-      header: 'Site',
-      primary: true,
-    },
-    {
-      property: 'categoryName',
-      header: 'Category',
-    },
-    {
       property: 'question',
-      header: 'Question',
+      header: <Text weight="bold">Question</Text>,
     },
     {
       property: 'userName',
-      header: 'User',
+      header: <Text weight="bold">User</Text>,
     },
     {
       property: 'completedDate',
-      header: 'Completed Date',
+      header: <Text weight="bold">Date</Text>,
     },
     {
       property: 'status',
-      header: 'Status',
+      header: <Text weight="bold">Status</Text>,
       render: datum => (
         <Text color={datum.status === 'completed' ? 'status-ok' : 'status-warning'}>
           {datum.status}
@@ -122,10 +109,10 @@ const ChecklistSubmissions = () => {
     },
     {
       property: 'imageUrl',
-      header: 'Image',
+      header: <Text weight="bold">Image</Text>,
       render: datum => datum.imageUrl ? (
         <Button
-          icon={<Download />}
+          icon={<Image color="brand" />}
           onClick={() => window.open(datum.imageUrl, '_blank')}
           tip="View Image"
           plain
@@ -134,7 +121,7 @@ const ChecklistSubmissions = () => {
     },
     {
       property: 'comment',
-      header: 'Comment',
+      header: <Text weight="bold">Comment</Text>,
       render: datum => datum.comment || '-',
     },
   ];
@@ -143,7 +130,7 @@ const ChecklistSubmissions = () => {
     <Box pad="medium" gap="medium">
       <Card background="dark-1">
         <CardHeader pad="medium">
-          <Text weight="bold">Filters</Text>
+          <Text weight="bold">Date Filters</Text>
         </CardHeader>
         <CardBody pad="medium">
           <Box direction="row" gap="medium" align="center">
@@ -160,16 +147,11 @@ const ChecklistSubmissions = () => {
               format="mm/dd/yyyy"
               value={filters.startDate}
               onChange={({ value }) => setFilters(prev => ({ ...prev, startDate: value }))}
-              placeholder="Start Date"
-            />
-            <DateInput
-              format="mm/dd/yyyy"
-              value={filters.endDate}
-              onChange={({ value }) => setFilters(prev => ({ ...prev, endDate: value }))}
-              placeholder="End Date"
+              placeholder="Date"
             />
             <Button
               primary
+              color="brand"
               label="Search"
               onClick={fetchSubmissions}
               disabled={loading}
@@ -178,21 +160,34 @@ const ChecklistSubmissions = () => {
         </CardBody>
       </Card>
 
-      <DataTable
-        columns={columns}
-        data={submissions}
-        background={{
-          header: 'dark-2',
-          body: ['dark-1', 'dark-2'],
-        }}
-        border
-        pad="small"
-        placeholder={
-          <Box pad="medium" align="center">
-            <Text color="text-weak">No submissions found</Text>
-          </Box>
-        }
-      />
+      <Card background="dark-1">
+        <CardHeader pad="medium">
+          <Text weight="bold">Checklist Submissions</Text>
+        </CardHeader>
+        <CardBody pad={{ horizontal: "small" }}>
+          <DataTable
+            columns={columns}
+            data={submissions}
+            step={10}
+            paginate
+            background={{
+              header: { color: 'dark-2', opacity: 'strong' },
+              body: ['dark-1', 'dark-2'],
+            }}
+            border={{ color: 'border', side: 'horizontal', size: '1px' }}
+            pad={{ horizontal: "small", vertical: "xsmall" }}
+            placeholder={
+              submissions.length === 0 ? (
+                <Box pad="medium" align="center">
+                  <Text color="text-weak">No submissions found. Use the filters above to search.</Text>
+                </Box>
+              ) : null
+            }
+            sortable
+            resizeable
+          />
+        </CardBody>
+      </Card>
     </Box>
   );
 };

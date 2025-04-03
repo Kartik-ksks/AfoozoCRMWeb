@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+ import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import MultiLevelMenus from './MultiLevelMenus';
 import { MenuContext } from '../context/menu';
@@ -41,10 +41,6 @@ const MultiLevelSidebar = ({ compact }) => {
 
 MultiLevelSidebar.propTypes = {
   compact: PropTypes.bool,
-};
-
-MultiLevelSidebar.defaultProps = {
-  compact: false,
 };
 
 export default MultiLevelSidebar;

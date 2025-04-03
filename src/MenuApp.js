@@ -32,8 +32,8 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
         userRole,
         setUserRole,
     } = useContext(SessionContext);
-    const { isBreakSidebar } = useContext(ResponsiveContext);
-    const [showSidebar, setShowSidebar] = useState(true);
+    const { isBreakSidebar, isMobile, isPortrait } = useContext(ResponsiveContext);
+    const [showSidebar, setShowSidebar] = useState(!isMobile);
     const [menuData, setMenuData] = useState([]);
 
     const updateRole = useCallback(() => {
@@ -117,6 +117,28 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
         }
     }, [userRole, menuData.length]);
 
+    useEffect(() => {
+        // Auto-hide sidebar on mobile devices
+        if (isMobile) {
+            setShowSidebar(false);
+        }
+    }, [isMobile]);
+
+    // Handle back button on mobile
+    useEffect(() => {
+        const handleBackButton = (e) => {
+            if (isMobile && showSidebar) {
+                e.preventDefault();
+                setShowSidebar(false);
+                return;
+            }
+        };
+
+        window.addEventListener('popstate', handleBackButton);
+        return () => {
+            window.removeEventListener('popstate', handleBackButton);
+        };
+    }, [isMobile, showSidebar]);
 
     const renderLoggedIn = () => {
         return (
@@ -124,19 +146,30 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 <Topbar
                     themeMode={themeMode}
                     toggleThemeMode={toggleThemeMode}
-                    // toggleCartLayer={toggleCartLayer}
                     toggleSidebar={toggleSidebar}
                     handleLogout={handleLogout}
+                    isMobile={isMobile}
                 />
-                <Box flex direction={isBreakSidebar() ? 'column-reverse' : 'row'}>
-
+                <Box 
+                    flex 
+                    direction={isBreakSidebar() ? 'column-reverse' : 'row'}
+                    height={isMobile ? '100%' : 'auto'}
+                >
                     <Sidebar
                         showSidebar={showSidebar}
                         background="#01060d"
                         themeMode={themeMode}
                         toggleThemeMode={toggleThemeMode}
+                        setShowSidebar={setShowSidebar}
+                        isMobile={isMobile}
                     />
-                    <Box flex overflow="auto">
+                    <Box 
+                        flex 
+                        overflow="auto"
+                        className="scroll-enabled"
+                        height={isMobile ? '100%' : 'auto'}
+                        width={isMobile && showSidebar ? '0' : '100%'}
+                    >
                         <Routes>
                             {userRole === "admin" && <Route path="/*" element={<AdminRoutes />} />}
                             {userRole === "manager" && <Route path="/*" element={<ManagerRoutes />} />}
@@ -168,7 +201,18 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 {loggedIn === null && restoredSession ? (
                     <LoadingLayer />
                 ) : (
-                    <Box data-id="id-indiTechCrm" fill overflow="auto">
+                    <Box 
+                        data-id="id-indiTechCrm" 
+                        fill 
+                        overflow={isMobile ? "hidden" : "auto"}
+                        style={isMobile ? {
+                            height: '100vh',
+                            width: '100vw',
+                            position: 'fixed',
+                            top: 0,
+                            left: 0
+                        } : {}}
+                    >
                         {renderContent()}
                     </Box>
                 )}
