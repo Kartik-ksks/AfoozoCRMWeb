@@ -8,6 +8,7 @@ import { MenuProvider } from './context/menu';
 import { NotificationProvider } from './context/notification/NotificationContext';
 import MenuApp from './MenuApp';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import PWADebug from './components/PWADebug';
 
 if (!window.matchMedia) {
   // undefined when running jest tests
@@ -59,6 +60,7 @@ const App = () => {
                     toggleThemeMode={toggleThemeMode}
                   />
                   <PWAInstallPrompt />
+                  {process.env.NODE_ENV === 'development' && <PWADebug />}
                 </MenuProvider>
               </NotificationProvider>
             </ResponsiveProvider>

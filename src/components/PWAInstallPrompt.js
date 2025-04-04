@@ -1,22 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Layer, Heading, Text } from 'grommet';
-import { Install } from 'grommet-icons';
+import { Install, AppsRounded } from 'grommet-icons';
 
 const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    // Check if the app is already installed
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+
+    // Detect iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setIsIOS(iOS);
+
     const handleBeforeInstallPrompt = (e) => {
-      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      // Prevent Chrome from automatically showing the prompt
       e.preventDefault();
       // Stash the event so it can be triggered later
       setDeferredPrompt(e);
-      // Show the prompt to the user
+      // Show our custom prompt
       setShowPrompt(true);
+
+      console.log('Install prompt was triggered');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // For debugging
+    console.log('PWA Install Prompt component mounted');
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -24,7 +38,7 @@ const PWAInstallPrompt = () => {
   }, []);
 
   const handleInstallClick = () => {
-    // Hide the prompt
+    // Hide our custom prompt
     setShowPrompt(false);
 
     // Show the install prompt
@@ -44,8 +58,49 @@ const PWAInstallPrompt = () => {
     }
   };
 
-  if (!showPrompt) return null;
+  // If already installed or no prompt available, don't show anything
+  if (isStandalone || (!showPrompt && !isIOS)) return null;
 
+  // Show iOS-specific instructions
+  if (isIOS) {
+    return (
+      <Layer
+        position="bottom"
+        modal={false}
+        margin={{ vertical: 'medium', horizontal: 'medium' }}
+        responsive={false}
+        animation="slide"
+      >
+        <Box
+          pad="medium"
+          gap="medium"
+          round="small"
+          background="dark-1"
+          elevation="medium"
+        >
+          <Box direction="row" gap="medium" align="center">
+            <AppsRounded size="medium" color="brand" />
+            <Box>
+              <Heading level={4} margin="none">Install Afoozo CRM</Heading>
+              <Text size="small">
+                Tap <Text weight="bold">Share</Text> then <Text weight="bold">Add to Home Screen</Text>
+              </Text>
+            </Box>
+          </Box>
+          <Box direction="row" gap="medium" justify="end">
+            <Button
+              label="Got it"
+              onClick={() => setShowPrompt(false)}
+              primary
+              color="brand"
+            />
+          </Box>
+        </Box>
+      </Layer>
+    );
+  }
+
+  // Show standard prompt for other browsers
   return (
     <Layer
       position="bottom"
