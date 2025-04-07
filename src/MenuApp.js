@@ -81,6 +81,12 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 setUserRole(res.user.role);
                 const newMenuData = getMenuDataForRole(res.user.role);
                 setMenuData(newMenuData);
+                
+                // Redirect manager users to ChecklistManagement page
+                if (res.user.role === "manager") {
+                    setTimeout(() => navigate('/checklist'), 100);
+                }
+                
                 return res;
             }
             return res;

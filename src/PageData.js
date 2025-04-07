@@ -2,15 +2,16 @@ import React from 'react';
 import {
   Cluster,
   Home,
-  Network,
-  Checkbox,
+  User,
+  Compliance,
+  Chat,
 } from 'grommet-icons';
 
 const mainPageData = [
   {
     name: 'Home',
     Icon: Home,
-    path: '',
+    path: 'home',
     roles: ['admin', 'manager'],
     summary: {
       title: 'Dashboard',
@@ -68,14 +69,14 @@ const mainPageData = [
   },
   {
     name: 'Account',
-    Icon: Cluster,
+    Icon: User,
     color: 'lightblue',
     path: 'accounts',
     roles: ['manager', 'user'],
   },
   {
     name: 'Feedback',
-    Icon: Network,
+    Icon: Chat,
     color: 'violet',
     path: 'feedback',
     roles: ['admin', 'manager', 'user'],
@@ -94,7 +95,7 @@ const mainPageData = [
   },
   {
     name: 'Checklist',
-    Icon: Checkbox,
+    Icon: Compliance,
     color: 'green',
     path: 'checklist',
     roles: ['admin', 'manager', 'user'],

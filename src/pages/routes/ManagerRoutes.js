@@ -10,7 +10,8 @@ import Accounts from "../user/accounts/Accounts";
 export default function ManagerRoutes() {
     return (
         <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Navigate to="/checklist/daily" replace />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/masters/:master" element={<Masters />} />
             <Route path="/masters" element={<Masters />} />
             <Route path="/feedback" element={<Feedback />} />
@@ -18,7 +19,7 @@ export default function ManagerRoutes() {
             <Route path="/checklist" element={<ChecklistManagement />} />
             <Route path="/checklist/:checklistType" element={<ChecklistManagement />} />
             <Route path="/accounts" element={<Accounts />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/checklist/daily" replace />} />
         </Routes>
     );
 }

@@ -9,13 +9,14 @@ export default function UserRoutes() {
     // convsole.log(userRole);
     return (
         <Routes>
-            <Route path="/" element={<ChecklistManagement />} />
+            <Route path="/" element={<Navigate to="/checklist/daily" replace />} />
+            <Route path="/home" element={<Accounts />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/feedback/:feedbackType" element={<Feedback />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/checklist" element={<ChecklistManagement />} />
             <Route path="/checklist/:checklistType" element={<ChecklistManagement />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/checklist/daily" replace />} />
         </Routes>
     );
 }

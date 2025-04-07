@@ -8,14 +8,14 @@ import ChecklistManagement from "../admin/checklist/ChecklistManagement";
 export default function AdminRoutes() {
     return (
         <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/masters/:master" element={<Masters />} />
             <Route path="/masters" element={<Masters />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/feedback/:feedbackType" element={<Feedback />} />
             <Route path="/checklist" element={<ChecklistManagement />} />
             <Route path="/checklist/:checklistType" element={<ChecklistManagement />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
     );
 }

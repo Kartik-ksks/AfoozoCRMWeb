@@ -56,25 +56,45 @@ const ChecklistSubmissions = () => {
       const response = await client.get(`/api/checklist/filters?${queryParams}`);
 
       // Transform the response data to match the new format
-      const transformedData = response.map(submission => ({
-        id: submission.id || submission.responseId,
-        siteName: submission.siteName || 'N/A',
-        categoryName: submission.categoryName || 'N/A',
-        question: submission.question || 'N/A',
-        userName: submission.userName || 'N/A',
-        completedDate: submission.completedDate
-          ? new Date(submission.completedDate).toLocaleDateString()
-          : (submission.responseDate ? new Date(submission.responseDate).toLocaleDateString() : 'N/A'),
-        status: submission.status || (submission.done ? 'completed' : 'pending'),
-        imageUrl: submission.imageUrl || null,
-        comment: submission.comment || '',
-        // Additional fields
-        responseId: submission.responseId,
-        itemId: submission.itemId,
-        userId: submission.userId,
-        done: submission.done,
-        responseDate: submission.responseDate
-      }));
+      const transformedData = response.map(submission => {
+        // Format date in dd/mm/yyyy format
+        const formatDate = (dateString) => {
+          if (!dateString) return 'N/A';
+          const date = new Date(dateString);
+          const day = date.getDate().toString().padStart(2, '0');
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        };
+
+        // Format time in hh:mm:ss format
+        const formatTime = (dateString) => {
+          if (!dateString) return 'N/A';
+          const date = new Date(dateString);
+          return date.toLocaleTimeString();
+        };
+
+        const dateToUse = submission.completedDate || submission.responseDate;
+
+        return {
+          id: submission.id || submission.responseId,
+          siteName: submission.siteName || 'N/A',
+          categoryName: submission.categoryName || 'N/A',
+          question: submission.question || 'N/A',
+          userName: submission.userName || 'N/A',
+          completedDate: dateToUse ? formatDate(dateToUse) : 'N/A',
+          completedTime: dateToUse ? formatTime(dateToUse) : 'N/A',
+          status: submission.status || (submission.done ? 'completed' : 'pending'),
+          imageUrl: submission.imageUrl || null,
+          comment: submission.comment || '',
+          // Additional fields
+          responseId: submission.responseId,
+          itemId: submission.itemId,
+          userId: submission.userId,
+          done: submission.done,
+          responseDate: submission.responseDate
+        };
+      });
 
       setSubmissions(transformedData);
     } catch (error) {
@@ -97,6 +117,10 @@ const ChecklistSubmissions = () => {
     {
       property: 'completedDate',
       header: <Text weight="bold">Date</Text>,
+    },
+    {
+      property: 'completedTime',
+      header: <Text weight="bold">Time</Text>,
     },
     {
       property: 'status',
@@ -144,7 +168,7 @@ const ChecklistSubmissions = () => {
               clear
             />
             <DateInput
-              format="mm/dd/yyyy"
+              format="dd/mm/yyyy"
               value={filters.startDate}
               onChange={({ value }) => setFilters(prev => ({ ...prev, startDate: value }))}
               placeholder="Date"
