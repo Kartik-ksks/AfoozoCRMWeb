@@ -1,15 +1,14 @@
 // Service Worker for Afoozo CRM PWA
 
-const CACHE_NAME = 'afoozo-pwa-v1';
+const CACHE_NAME = 'afoozo-pwa-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/static/js/main.chunk.js',
-  '/static/js/0.chunk.js',
-  '/static/js/bundle.js',
   '/manifest.json',
   '/favicon.ico',
-  '/android-chrome-192x192.png'
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
+  '/offline.html'
 ];
 
 // Install a service worker
@@ -48,6 +47,13 @@ self.addEventListener('fetch', event => {
               });
 
             return response;
+          })
+          .catch(() => {
+            // If fetch fails, return offline page for navigation requests
+            if (event.request.mode === 'navigate') {
+              return caches.match('/offline.html');
+            }
+            return new Response('Offline content not available');
           });
       })
   );

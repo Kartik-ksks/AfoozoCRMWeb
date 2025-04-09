@@ -7,6 +7,7 @@ const PWAInstallPrompt = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     // Check if the app is already installed
@@ -16,21 +17,30 @@ const PWAInstallPrompt = () => {
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(iOS);
 
+    // Detect mobile device
+    const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobile(mobile);
+
     const handleBeforeInstallPrompt = (e) => {
       // Prevent Chrome from automatically showing the prompt
       e.preventDefault();
-      // Stash the event so it can be triggered later
-      setDeferredPrompt(e);
-      // Show our custom prompt
-      setShowPrompt(true);
-
-      console.log('Install prompt was triggered');
+      
+      // Only process the prompt for mobile devices
+      if (mobile) {
+        // Stash the event so it can be triggered later
+        setDeferredPrompt(e);
+        // Show our custom prompt
+        setShowPrompt(true);
+        console.log('Install prompt was triggered on mobile');
+      } else {
+        console.log('Install prompt was triggered on desktop - ignored');
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     // For debugging
-    console.log('PWA Install Prompt component mounted');
+    console.log('PWA Install Prompt component mounted, isMobile:', mobile);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -58,11 +68,11 @@ const PWAInstallPrompt = () => {
     }
   };
 
-  // If already installed or no prompt available, don't show anything
-  if (isStandalone || (!showPrompt && !isIOS)) return null;
+  // If already installed, not mobile, or no prompt available, don't show anything
+  if (isStandalone || !isMobile || (!showPrompt && !isIOS)) return null;
 
-  // Show iOS-specific instructions
-  if (isIOS) {
+  // Show iOS-specific instructions (only on mobile)
+  if (isIOS && isMobile) {
     return (
       <Layer
         position="bottom"
@@ -100,7 +110,7 @@ const PWAInstallPrompt = () => {
     );
   }
 
-  // Show standard prompt for other browsers
+  // Show standard prompt for other mobile browsers
   return (
     <Layer
       position="bottom"
