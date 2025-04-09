@@ -125,8 +125,8 @@ const FeedbackForm = () => {
     };
 
     const handleSatisfactionChange = (value) => {
-        setSatisfied(value === 'Yes');
-        if (value === 'Yes') {
+        setSatisfied(value);
+        if (value) {
             // Pre-fill all questions with 5-star ratings
             setFormData(prev => ({
                 ...prev,
@@ -237,12 +237,48 @@ const FeedbackForm = () => {
                             </FormField>
 
                             <FormField label="Are you satisfied with our service?" error={errors.satisfied}>
-                                <RadioButtonGroup
-                                    name="satisfied"
-                                    options={['Yes', 'No']}
-                                    value={satisfied === null ? '' : satisfied ? 'Yes' : 'No'}
-                                    onChange={(e) => handleSatisfactionChange(e.target.value)}
-                                />
+                                <Box direction="row" gap="medium" justify="center" margin={{ top: 'small' }}>
+                                    <Button
+                                        plain
+                                        onClick={() => handleSatisfactionChange(true)}
+                                        focusIndicator={false}
+                                        style={{
+                                            padding: '12px 24px',
+                                            borderRadius: '8px',
+                                            background: satisfied === true ? 'rgba(0, 128, 0, 0.1)' : 'white',
+                                            border: '2px solid',
+                                            borderColor: satisfied === true ? 'green' : 'light-4',
+                                            transition: 'all 0.2s ease',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}
+                                    >
+                                        <Text size="xlarge">😊</Text>
+                                        <Text color={satisfied === true ? 'green' : 'dark-6'}>Satisfied</Text>
+                                    </Button>
+                                    <Button
+                                        plain
+                                        onClick={() => handleSatisfactionChange(false)}
+                                        focusIndicator={false}
+                                        style={{
+                                            padding: '12px 24px',
+                                            borderRadius: '8px',
+                                            background: satisfied === false ? 'rgba(255, 0, 0, 0.1)' : 'white',
+                                            border: '2px solid',
+                                            borderColor: satisfied === false ? 'red' : 'light-4',
+                                            transition: 'all 0.2s ease',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}
+                                    >
+                                        <Text size="xlarge">☹️</Text>
+                                        <Text color={satisfied === false ? 'red' : 'dark-6'}>Not Satisfied</Text>
+                                    </Button>
+                                </Box>
                             </FormField>
 
                             {satisfied === false && questions.map((question, index) => (
