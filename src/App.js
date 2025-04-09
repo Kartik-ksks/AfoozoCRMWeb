@@ -9,6 +9,7 @@ import { NotificationProvider } from './context/notification/NotificationContext
 import MenuApp from './MenuApp';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import PWADebug from './components/PWADebug';
+import './styles/mobile.css';
 
 if (!window.matchMedia) {
   // undefined when running jest tests

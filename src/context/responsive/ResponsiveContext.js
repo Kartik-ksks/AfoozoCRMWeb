@@ -13,7 +13,9 @@ export const Provider = ({ children = null }) => {
    */
   const width = useContext(GrommetResponsiveContext);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
 
   // isBreak() is independent of breakpoint labels
   const { breakpoints } = theme.global;
@@ -30,43 +32,64 @@ export const Provider = ({ children = null }) => {
   const isBreakSidebar = useCallback(() => isBreak('sidebar'), [isBreak]);
   const isBreakInfobar = useCallback(() => isBreak('infobar'), [isBreak]);
   
-  // Check for mobile devices
+  // Check for mobile and tablet devices
   useEffect(() => {
-    const checkMobile = () => {
+    const checkDeviceType = () => {
       const mobileBreakpoint = 768;
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-      setIsPortrait(window.innerHeight > window.innerWidth);
+      const tabletBreakpoint = 1024;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      
+      setIsMobile(windowWidth <= mobileBreakpoint);
+      setIsTablet(windowWidth > mobileBreakpoint && windowWidth <= tabletBreakpoint);
+      setIsPortrait(windowHeight > windowWidth);
+      setViewportHeight(windowHeight);
+      
+      // Update CSS custom properties for viewport height (vh issues on mobile)
+      document.documentElement.style.setProperty('--vh', `${windowHeight * 0.01}px`);
     };
     
     // Initial check
-    checkMobile();
+    checkDeviceType();
     
-    // Add event listener for window resize
-    window.addEventListener('resize', checkMobile);
-    window.addEventListener('orientationchange', checkMobile);
+    // Add event listeners
+    window.addEventListener('resize', checkDeviceType);
+    window.addEventListener('orientationchange', () => {
+      // Delay the update slightly to account for browser calculations
+      setTimeout(checkDeviceType, 100);
+    });
     
     // Cleanup
     return () => {
-      window.removeEventListener('resize', checkMobile);
-      window.removeEventListener('orientationchange', checkMobile);
+      window.removeEventListener('resize', checkDeviceType);
+      window.removeEventListener('orientationchange', () => {
+        setTimeout(checkDeviceType, 100);
+      });
     };
   }, []);
   
-  // Prevent bounce effect on iOS
+  // Improve scrolling on iOS
   useEffect(() => {
     const handleTouchMove = (e) => {
-      // Allow scrolling in elements with the class "scroll-enabled"
-      if (!e.target.closest('.scroll-enabled')) {
+      // Only prevent default if we're not in a scrollable element
+      if (!e.target.closest('.scroll-enabled') && !e.target.closest('[data-scrollable="true"]')) {
         e.preventDefault();
       }
     };
     
     if (isMobile) {
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      // Add class to body for mobile-specific styling
+      document.body.classList.add('mobile-device');
+      
+      // Prevent elastic scroll on iOS
+      document.body.addEventListener('touchmove', handleTouchMove, { passive: false });
+    } else {
+      document.body.classList.remove('mobile-device');
     }
     
     return () => {
-      document.removeEventListener('touchmove', handleTouchMove);
+      document.body.classList.remove('mobile-device');
+      document.body.removeEventListener('touchmove', handleTouchMove);
     };
   }, [isMobile]);
 
@@ -78,9 +101,11 @@ export const Provider = ({ children = null }) => {
       isBreakSidebar,
       isBreakInfobar,
       isMobile,
-      isPortrait
+      isTablet,
+      isPortrait,
+      viewportHeight
     }),
-    [isBreak, isBreakInfobar, isBreakSidebar, width, isMobile, isPortrait],
+    [isBreak, isBreakInfobar, isBreakSidebar, width, isMobile, isTablet, isPortrait, viewportHeight],
   );
 
   // pass the value in provider and return

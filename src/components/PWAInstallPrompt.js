@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Box, Button, Layer, Heading, Text } from 'grommet';
 import { Install, AppsRounded } from 'grommet-icons';
+import { ResponsiveContext } from '../context/responsive';
 
 const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useContext(ResponsiveContext);
 
   useEffect(() => {
     // Check if the app is already installed
@@ -17,35 +18,29 @@ const PWAInstallPrompt = () => {
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(iOS);
 
-    // Detect mobile device
-    const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    setIsMobile(mobile);
-
     const handleBeforeInstallPrompt = (e) => {
       // Prevent Chrome from automatically showing the prompt
       e.preventDefault();
-      
-      // Only process the prompt for mobile devices
-      if (mobile) {
-        // Stash the event so it can be triggered later
-        setDeferredPrompt(e);
-        // Show our custom prompt
+      // Stash the event so it can be triggered later
+      setDeferredPrompt(e);
+      // Show our custom prompt only if on mobile
+      if (isMobile) {
         setShowPrompt(true);
         console.log('Install prompt was triggered on mobile');
       } else {
-        console.log('Install prompt was triggered on desktop - ignored');
+        console.log('Install prompt was triggered but suppressed on desktop');
       }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     // For debugging
-    console.log('PWA Install Prompt component mounted, isMobile:', mobile);
+    console.log('PWA Install Prompt component mounted, isMobile:', isMobile);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [isMobile]);
 
   const handleInstallClick = () => {
     // Hide our custom prompt
@@ -68,11 +63,11 @@ const PWAInstallPrompt = () => {
     }
   };
 
-  // If already installed, not mobile, or no prompt available, don't show anything
-  if (isStandalone || !isMobile || (!showPrompt && !isIOS)) return null;
+  // If not mobile, already installed, or no prompt available, don't show anything
+  if (!isMobile || isStandalone || (!showPrompt && !isIOS)) return null;
 
-  // Show iOS-specific instructions (only on mobile)
-  if (isIOS && isMobile) {
+  // Show iOS-specific instructions
+  if (isIOS) {
     return (
       <Layer
         position="bottom"
@@ -110,7 +105,7 @@ const PWAInstallPrompt = () => {
     );
   }
 
-  // Show standard prompt for other mobile browsers
+  // Show standard prompt for other browsers
   return (
     <Layer
       position="bottom"

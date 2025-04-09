@@ -10,7 +10,7 @@ const registerServiceWorker = () => {
         .register('/serviceWorker.js')
         .then(registration => {
           console.log('Service Worker registered successfully:', registration.scope);
-          
+
           // Check for updates
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;

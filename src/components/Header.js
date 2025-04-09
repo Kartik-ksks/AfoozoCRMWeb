@@ -1,24 +1,18 @@
 import { Apps } from 'grommet-icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { ResponsiveContext } from '../context/responsive';
 import { Button } from 'grommet';
 
 const Header = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useContext(ResponsiveContext);
 
   useEffect(() => {
-    // Detect mobile device
-    const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    setIsMobile(mobile);
-
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
-      // Only process prompt on mobile devices
-      if (mobile) {
+      // Only save prompt for mobile devices
+      if (isMobile) {
         setDeferredPrompt(e);
-        console.log('Install prompt available in header (mobile)');
-      } else {
-        console.log('Install prompt available in header, but ignored (desktop)');
       }
     };
 
@@ -27,7 +21,7 @@ const Header = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [isMobile]);
 
   const handleInstallClick = () => {
     if (!deferredPrompt) return;
