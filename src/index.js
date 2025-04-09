@@ -17,7 +17,7 @@ const registerServiceWorker = () => {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // New content is available, refresh the page
-                if (confirm('New version available! Click OK to refresh.')) {
+                if (window.confirm('New version available! Click OK to refresh.')) {
                   window.location.reload();
                 }
               }
