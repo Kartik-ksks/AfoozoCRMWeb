@@ -198,6 +198,16 @@ const FeedbackTable = ({ feedbacks, searchText, setSearchText }) => {
             sortable: true,
         },
         {
+            property: 'rating',
+            header: <Text color="light-1">Overall Rating</Text>,
+            render: (datum) => (
+                <Text color="dark-4" size="small">
+                    {datum.rating}
+                </Text>
+            ),
+            sortable: true,
+        },
+        {
             property: 'answers',
             header: <Text color="light-1">Questions & Ratings</Text>,
             render: (datum) => (
@@ -224,6 +234,16 @@ const FeedbackTable = ({ feedbacks, searchText, setSearchText }) => {
                     ))}
                 </Box>
             ),
+        },
+        {
+            property: 'comment',
+            header: <Text color="light-1">Comments</Text>,
+            render: (datum) => (
+                <Text color="dark-4" size="small">
+                    {datum.comment}
+                </Text>
+            ),
+            sortable: true,
         },
     ];
 
