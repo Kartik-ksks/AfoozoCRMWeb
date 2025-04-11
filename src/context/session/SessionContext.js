@@ -6,7 +6,9 @@ import React, {
     useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import AfoozoClient from './Client';
+import { useEncryptedStorage } from './hooks';
 
 export const Context = createContext({});
 Context.displayName = 'SessionContext';
@@ -15,6 +17,12 @@ Context.displayName = 'SessionContext';
 const client = new AfoozoClient();
 
 export const Provider = ({ children, onSessionExpired }) => {
+    const navigate = useNavigate();
+    const { getItem, setItem, removeItem } = useEncryptedStorage();
+    client.navigate = navigate;
+    client.getItem = getItem;
+    client.setItem = setItem;
+    client.removeItem = removeItem;
     const [loggedIn, setLoggedIn] = useState(() => {
         const restored = client.restoreSession();
         return restored ? true : null;

@@ -1,9 +1,6 @@
 import io from 'socket.io-client';
 const promiseLimit = require('promise-limit');
 
-const config = {
-  sessionStorage: window.sessionStorage,
-};
 
 const POLL_INTERVAL = 60000; // msecs to poll URIs if no event connection
 const TAB_ID = `${Date.now()}-${Math.random()}`; // unique ID per tab
@@ -24,7 +21,7 @@ class AfoozoMonitor {
 }
 
 class AfoozoClient {
-  constructor(devMode, devModeSsePoll) {
+  constructor() {
     this.session = null;
     this.socket = null;
     this.mockup = 'https://api.afoozo.com';
@@ -56,6 +53,10 @@ class AfoozoClient {
     // A handle for an XHR file upload request
     this.xhr = null;
     this.xhrAborted = false;
+    this.navigate = null;
+    this.getItem = null;
+    this.setItem = null;
+    this.removeItem = null;
 
     window.addEventListener('unload', () => {
       if (window.localStorage.getItem('sse-owner') === TAB_ID) {
@@ -76,10 +77,10 @@ class AfoozoClient {
    * testRestoredSession for that if this returns true.
    */
   restoreSession = () => {
-    const token = config.sessionStorage.getItem('session-token');
-    const username = config.sessionStorage.getItem('session-uri');
-    const email = config.sessionStorage.getItem('session-user');
-    const role = config.sessionStorage.getItem('session-role');
+    const token = this.getItem('session-token');
+    const username = this.getItem('session-uri');
+    const email = this.getItem('session-user');
+    const role = this.getItem('session-role');
 
     if (token && username && email && role) {
       this.session = {
@@ -171,10 +172,10 @@ class AfoozoClient {
     })
       .then(() => {
         // Clear session storage
-        config.sessionStorage.removeItem('session-token');
-        config.sessionStorage.removeItem('session-uri');
-        config.sessionStorage.removeItem('session-user');
-        config.sessionStorage.removeItem('session-role');
+        this.removeItem('session-token');
+        this.removeItem('session-uri');
+        this.removeItem('session-user');
+        this.removeItem('session-role');
 
         // Clear session data
         this.session = null;
@@ -567,13 +568,14 @@ class AfoozoClient {
   rmSession = () => {
     console.log('rmSession');
     this.session = null;
-    config.sessionStorage.removeItem('session-token');
-    config.sessionStorage.removeItem('session-uri');
-    config.sessionStorage.removeItem('session-user');
-    config.sessionStorage.removeItem('session-role');
+    this.removeItem('session-token');
+    this.removeItem('session-uri');
+    this.removeItem('session-user');
+    this.removeItem('session-role');
     this.resourceCache = {};
     this.loadingCache = {};
     this.eventsFailed = false;
+    this.navigate('/login');
     // if (window.localStorage.getItem('sse-owner') === TAB_ID) {
     //   window.localStorage.removeItem('sse-owner');
     // }
@@ -720,10 +722,10 @@ class AfoozoClient {
 
   initSession(token, username, email, role) {
     // Store in session storage
-    config.sessionStorage.setItem('session-token', token);
-    config.sessionStorage.setItem('session-uri', username);
-    config.sessionStorage.setItem('session-user', email);
-    config.sessionStorage.setItem('session-role', role);
+    this.setItem('session-token', token);
+    this.setItem('session-uri', username);
+    this.setItem('session-user', email);
+    this.setItem('session-role', role);
 
     // Update client session
     this.session = {

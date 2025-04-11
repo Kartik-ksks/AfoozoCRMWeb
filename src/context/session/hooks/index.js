@@ -1,2 +1,3 @@
 import useMonitor from './useMonitor';
-export { useMonitor };
+import useEncryptedStorage from './useEncryptionHook';
+export { useMonitor, useEncryptedStorage };

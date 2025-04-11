@@ -42,6 +42,8 @@
     ]
   },
   "devDependencies": {
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.5.0",
     "grommet": "^2.43.0",
     "grommet-icons": "^4.12.1",
     "web-vitals": "^4.2.4",
