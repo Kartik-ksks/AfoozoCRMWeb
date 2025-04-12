@@ -235,6 +235,7 @@ const SiteTable = ({ title, uri }) => {
                     noPrompt="Cancel"
                     estimatedTime={5}
                     onSuccess={() => setDeleteSite(null)}
+                    progressLabel={`Deleting site ${deleteSite.SiteName}...`}
                 />
             )}
         </Box>

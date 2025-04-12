@@ -266,6 +266,7 @@ const ChecklistItemForm = ({ title }) => {
           yesPrompt="Add"
           noPrompt="Cancel"
           estimatedTime={5}
+          progressLabel={`Adding item ${formValues.Question}...`}
         />
       )}
 
@@ -286,6 +287,7 @@ const ChecklistItemForm = ({ title }) => {
           yesPrompt="Save"
           noPrompt="Cancel"
           estimatedTime={5}
+          progressLabel={`Editing item ${formValues.Question}...`}
         />
       )}
 
@@ -298,6 +300,7 @@ const ChecklistItemForm = ({ title }) => {
           yesPrompt="Delete"
           noPrompt="Cancel"
           estimatedTime={5}
+          progressLabel={`Deleting item ${deleteItem.Question}...`}
         />
       )}
     </Box>

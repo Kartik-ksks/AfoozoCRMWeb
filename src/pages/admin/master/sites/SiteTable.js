@@ -240,6 +240,7 @@ const SiteTable = ({ title, uri }) => {
                         handleReload();
                         setDeleteSite(null);
                     }}
+                    progressLabel={`Deleting site ${deleteSite.SiteName}...`}
                 />
             )}
         </Box>

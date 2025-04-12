@@ -127,7 +127,7 @@ import React, {
           setStatus('critical');
           setMessages([{
             health: 'critical',
-            msg: errorData.error || 'An error occurred'
+            msg: errorData.message || 'An error occurred'
           }]);
           setCompleted(100);
           return false;
@@ -137,7 +137,7 @@ import React, {
         setStatus('critical');
         setMessages([{
           health: 'critical',
-          msg: 'Failed to parse server response'
+          msg: error.message || 'An error occurred'
         }]);
         setCompleted(100);
         return false;

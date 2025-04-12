@@ -3,40 +3,27 @@ import PropTypes from 'prop-types';
 import {
   Box,
   Button,
-  Cards,
-  Data,
-  DataFilter,
-  DataFilters,
-  DataSearch,
-  DataSummary,
-  DataTableColumns,
   Grid,
   Heading,
   Text,
-  Toolbar,
   Menu,
   Layer,
   Form,
   FormField,
   TextInput,
   Select,
-  CheckBoxGroup,
   SelectMultiple,
   Card,
   CheckBox,
 } from 'grommet';
 import { More, Edit, Trash, Search, Filter } from 'grommet-icons';
-import { ResponsiveContext } from 'grommet';
-import { ConfirmOperation, LoadingLayer, QLayer, CoverPage } from '../../../components';
-import { SessionContext, useMonitor } from '../../../context/session';
-import { FilteredDataTable, DataTableGroups, SelectedDataTable } from '../../../components/dataTable';
+import { ConfirmOperation, LoadingLayer } from '../../../components';
+import { SessionContext } from '../../../context/session';
 
 const ROLES = ['admin', 'manager', 'user'];
 
 const UserCard = ({ user, onEdit, onDelete }) => {
-  const breakpoint = useContext(ResponsiveContext);
-
-  return (
+return (
     <Card elevation="small">
       <Box pad="medium" gap="small">
         <Box direction="row" justify="between" align="center">
@@ -73,7 +60,7 @@ const UserCard = ({ user, onEdit, onDelete }) => {
 };
 
 const FilterLayer = ({ onClose, filters, setFilters }) => (
-  <Layer position="right" onClickOutside={onClose} onEsc={onClose}>
+  <Layer fill position="right" onClickOutside={onClose} onEsc={onClose}>
     <Box pad="medium" gap="medium" width="medium">
       <Text weight="bold">Filters</Text>
       <Form value={filters} onChange={setFilters}>
@@ -136,30 +123,95 @@ const UserTable = ({ title }) => {
     SiteIds: [],
   });
   const [sites, setSites] = useState([]);
+  const [rawUsers, setRawUsers] = useState(null);
+  const [rawSites, setRawSites] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  useMonitor(
-    client,
-    ['/api/users', '/api/sites'],
-    ({ ['/api/users']: userData, ['/api/sites']: siteData }) => {
-      if (!userData || !siteData) return;
+  useEffect(() => {
+    if (!client) return;
+    let isMounted = true;
+    setLoading(true);
+    setFetchError(null);
 
-      const sitesMap = Object.fromEntries(
-        siteData.map(site => [site.SiteId.toString(), site.SiteName])
-      );
+    const fetchUsers = async () => {
+      try {
+        const userData = await client.get('/api/users');
+        if (isMounted) {
+          setRawUsers(userData || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        if (isMounted) setFetchError("Failed to load users.");
+      } finally {
+      }
+    };
 
-      const transformedUsers = userData.map(user => ({
-        ...user,
-        SiteIds: user.SiteIds.map(siteId => sitesMap[siteId.toString()] || 'Unknown Site')
-      }));
+    fetchUsers();
 
-      setUsers(transformedUsers);
-      setSites(siteData.map(site => ({
-        label: site.SiteName,
-        value: site.SiteId.toString(),
-      })));
+    return () => { isMounted = false; };
+  }, [client, reloadTrigger]);
+
+  useEffect(() => {
+    if (!client) return;
+    let isMounted = true;
+    setFetchError(null);
+
+    const fetchSites = async () => {
+      try {
+        const siteData = await client.get('/api/sites');
+        if (isMounted) {
+          setRawSites(siteData || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sites:", error);
+        if (isMounted) setFetchError("Failed to load sites.");
+      } finally {
+      }
+    };
+
+    fetchSites();
+
+    return () => { isMounted = false; };
+  }, [client, reloadTrigger]);
+
+  useEffect(() => {
+    if (rawUsers && rawSites) {
+      try {
+        const sitesMap = Object.fromEntries(
+          rawSites.map(site => [site.SiteId.toString(), site.SiteName])
+        );
+
+        const transformedUsers = rawUsers.map(user => ({
+          ...user,
+          SiteIds: Array.isArray(user.SiteIds) ? user.SiteIds.map(siteId => sitesMap[siteId.toString()] || 'Unknown Site') : [],
+        }));
+
+        setUsers(transformedUsers);
+        setSites(rawSites.map(site => ({
+          label: site.SiteName,
+          value: site.SiteId.toString(),
+        })));
+        setFetchError(null);
+      } catch (error) {
+        console.error("Failed to process user/site data:", error);
+        setFetchError("Failed to process data.");
+        setUsers([]);
+        setSites([]);
+      } finally {
+        setLoading(false);
+      }
+    } else if (fetchError) {
       setLoading(false);
     }
-  );
+  }, [rawUsers, rawSites, fetchError]);
+
+  const handleReload = () => {
+    setLoading(true);
+    setRawUsers(null);
+    setRawSites(null);
+    setReloadTrigger(prev => prev + 1);
+  };
 
   const filteredUsers = users.filter(user => {
     // Text search
@@ -183,7 +235,7 @@ const UserTable = ({ title }) => {
   const formContent = (
     <Form value={formValues} onChange={setFormValues}>
       <Box gap="medium">
-        <FormField name="Username" label="Username" required>
+        <FormField name="Username" label="Name" required>
           <TextInput name="Username" />
         </FormField>
 
@@ -229,15 +281,48 @@ const UserTable = ({ title }) => {
           gap="small"
           margin={{ top: 'medium', bottom: 'large' }}
         >
-          <Heading id='idSites-table' level={2}>
-            {title}
-          </Heading>
+          <Heading level={2}>{title}</Heading>
+          <Button
+            primary
+            color="status-critical"
+            label="Add User"
+            onClick={() => setAddUser(true)}
+          />
         </Box>
       </Box>
+
+      <Box direction="row" justify="between" align="center">
+        <Box direction="row" gap="small" align="center">
+          <Box width="medium">
+            <TextInput
+              icon={<Search />}
+              placeholder="Search users..."
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+            />
+          </Box>
+          <Button
+            icon={<Filter />}
+            onClick={() => setShowFilters(true)}
+            badge={Object.keys(filters).length || undefined}
+          />
+        </Box>
+        <Box direction="row" gap="small" align="center">
+
+          <Button
+            secondary
+            color="status-critical"
+            label="Reload"
+            onClick={handleReload}
+            disabled={loading}
+          />
+        </Box>
+      </Box>
+
       <Grid
+        height={{ min: 'small' }}
         columns={{ count: 'fit', size: 'small' }}
         gap="medium"
-        height={{ min: 'small' }}
       >
         {filteredUsers.map(user => (
           <UserCard
@@ -276,7 +361,7 @@ const UserTable = ({ title }) => {
           estimatedTime={5}
           text={formContent}
           onSuccess={() => {
-            setLoading(true);
+            handleReload();
             setAddUser(false);
           }}
           progressLabel={`Adding user ${formValues.Username}...`}
@@ -307,7 +392,11 @@ const UserTable = ({ title }) => {
           noPrompt="Cancel"
           estimatedTime={5}
           text={formContent}
-          onSuccess={() => setLoading(true)}
+          onSuccess={() => {
+            handleReload();
+            setEditUser(null);
+          }}
+          progressLabel={`Editing user ${formValues.Username}...`}
         />
       )}
 
@@ -320,7 +409,11 @@ const UserTable = ({ title }) => {
           yesPrompt="Delete"
           noPrompt="Cancel"
           estimatedTime={5}
-          onSuccess={() => setLoading(true)}
+          onSuccess={() => {
+            handleReload();
+            setDeleteUser(null);
+          }}
+          progressLabel={`Deleting user ${deleteUser.Username}...`}
         />
       )}
     </Box>

@@ -9,6 +9,7 @@ import { LoadingLayer } from './LoadingLayer';
 import { DataTableGroups, FilteredDataTable, SelectedDataTable } from './dataTable';
 import SaveAsMenu from './SaveAsMenu';
 import ConfirmOperation from './ConfirmOperation';
+import AnimatedMeter from './AnimatedMeter';
 export {
     QLayer,
     RoutedButton,
@@ -23,6 +24,7 @@ export {
     SelectedDataTable,
     SaveAsMenu,
     ConfirmOperation,
+    AnimatedMeter,
 };
 
 export * from './Tile';

@@ -169,6 +169,7 @@ const Accounts = () => {
                             noPrompt="Cancel"
                             estimatedTime={5}
                             onSuccess={() => setLoading(true)}
+                            progressLabel={`Changing password...`}
                         />
                     )}
                 </TileBox>

@@ -124,6 +124,7 @@ const WriteFeedback = ({ title, FeedbackUri }) => {
                             rating: 5
                         });
                     }}
+                    progressLabel={`Submitting feedback...`}
                 />
             )}
         </Box>

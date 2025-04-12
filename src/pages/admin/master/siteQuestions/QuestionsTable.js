@@ -370,6 +370,7 @@ const QuestionsTable = ({ title }) => {
             handleReload();
             setAddQuestion(false);
           }}
+          progressLabel={`Adding question ${formValues.QuestionText}...`}
         />
       )}
 
@@ -395,6 +396,7 @@ const QuestionsTable = ({ title }) => {
             handleReload();
             setEditQuestion(null);
           }}
+          progressLabel={`Editing question ${formValues.QuestionText}...`}
         />
       )}
 
@@ -411,6 +413,7 @@ const QuestionsTable = ({ title }) => {
             handleReload();
             setDeleteQuestion(null);
           }}
+          progressLabel={`Deleting question ${deleteQuestion.QuestionText}...`}
         />
       )}
     </Box>

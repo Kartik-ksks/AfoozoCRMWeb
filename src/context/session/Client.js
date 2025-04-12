@@ -24,8 +24,8 @@ class AfoozoClient {
   constructor() {
     this.session = null;
     this.socket = null;
-    this.mockup = 'https://api.afoozo.com';
-    // this.mockup = 'http://localhost:5000';
+    // this.mockup = 'https://api.afoozo.com';
+    this.mockup = 'http://localhost:5000';
     // List of AfoozoMonitors.
     this.monitors = [];
 
@@ -408,26 +408,26 @@ class AfoozoClient {
    */
   reallyGet(uri, isCacheOk) {
     // If we've already gotten this URI, return the cached result.
-    if (isCacheOk && !this.eventsFailed && uri in this.resourceCache) {
-      const { body } = this.resourceCache[uri];
-      return new Promise((resolve) => {
-        // Simulate a very quick asynchronous call.
-        // Otherwise, pages loading lots of cached data will seem to hang
-        // while all the data is being grabbed from the cache and processed.
-        setTimeout(() => {
-          this.doMonitorCallbacksForUri(uri);
-          this.resolveFetchWaiter();
-          return resolve(body);
-        });
-      });
-    }
+    // if (isCacheOk && !this.eventsFailed && uri in this.resourceCache) {
+    //   const { body } = this.resourceCache[uri];
+    //   return new Promise((resolve) => {
+    //     // Simulate a very quick asynchronous call.
+    //     // Otherwise, pages loading lots of cached data will seem to hang
+    //     // while all the data is being grabbed from the cache and processed.
+    //     setTimeout(() => {
+    //       this.doMonitorCallbacksForUri(uri);
+    //       this.resolveFetchWaiter();
+    //       return resolve(body);
+    //     });
+    //   });
+    // }
 
-    // If we're already waiting on a response for this URI, return that.
-    if (uri in this.loadingCache) {
-      return this.loadingCache[uri];
-    }
+    // // If we're already waiting on a response for this URI, return that.
+    // if (uri in this.loadingCache) {
+    //   return this.loadingCache[uri];
+    // }
 
-    let etag = null;
+    // let etag = null;
     const promise = fetch(...this.getFetchArgs(uri, true))
       .then((res) => {
         this.checkSessionLoss(res);
@@ -438,23 +438,7 @@ class AfoozoClient {
           this.sessionExpired();
           this.rmSession();
         }
-        if (!res.ok) {
-          this.doneLoading(uri);
-          throw new Error(`Failed to get ${uri}`);
-        }
-        // For expanded collections, the etag in the header is the one we want.
-        // The one inside the JSON body as @odata.etag is the etag of the
-        // unexpanded collection.
-        etag = res.headers.get('ETag');
         return res.json();
-      })
-      .then((json) => {
-        // the mockup server returns data in the Body property
-        /* eslint-disable no-param-reassign */
-        if (this.mockup && json.Body) json = json.Body;
-        this.addToResourceCache(uri, json, etag);
-        this.doneLoading(uri);
-        return json;
       })
       .catch((e) => {
         this.doneLoading(uri);
@@ -465,7 +449,7 @@ class AfoozoClient {
         throw e;
       });
 
-    this.loadingCache[uri] = promise;
+    // this.loadingCache[uri] = promise;
     return promise;
   }
 

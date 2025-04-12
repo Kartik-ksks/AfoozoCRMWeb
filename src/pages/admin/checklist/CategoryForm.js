@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import {
   Box,
   Button,
@@ -22,7 +23,7 @@ import { FilteredDataTable } from '../../../components/dataTable';
 
 const CategoryForm = ({ title }) => {
   const { client } = useContext(SessionContext);
-  const [data, setData] = useState();
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addCategory, setAddCategory] = useState(false);
   const [editCategory, setEditCategory] = useState(null);
@@ -33,57 +34,102 @@ const CategoryForm = ({ title }) => {
     Description: '',
   });
   const [sites, setSites] = useState([]);
+  const [rawSites, setRawSites] = useState(null);
+  const [rawCategories, setRawCategories] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useEffect(() => {
+    if (!client) return;
+    let isMounted = true;
+    setLoading(true);
+    setFetchError(null);
+
     const fetchSites = async () => {
       try {
-        const response = await client.rawGet('/api/sites');
-        const sitesData = await response.json();
-        const formattedSites = sitesData.map(site => ({
-          value: site.SiteId.toString(),
-          label: site.SiteName,
-          original: site
-        }));
-        setSites(formattedSites);
+        console.log("Fetching sites...");
+        const sitesData = await client.get('/api/sites');
+        console.log("Sites fetched:", sitesData);
+        const formattedSites = (Array.isArray(sitesData) ? sitesData : [])
+          .filter(site => site && site.SiteId !== undefined && site.SiteName !== undefined)
+          .map(site => ({
+            value: site.SiteId.toString(),
+            label: site.SiteName,
+          }));
+        if (isMounted) {
+          setRawSites(sitesData || []);
+          setSites(formattedSites);
+        }
       } catch (error) {
         console.error('Error fetching sites:', error);
+        if (isMounted) setFetchError("Failed to load sites.");
       }
     };
 
     fetchSites();
+
+    return () => { isMounted = false; };
   }, [client, reloadTrigger]);
 
   useEffect(() => {
+    if (!client) return;
+    let isMounted = true;
+    setFetchError(null);
+
     const fetchCategories = async () => {
       try {
-        setLoading(true);
-        const response = await client.rawGet('/api/checklist/categories');
-        const categories = await response.json();
-
-        const transformedCategories = categories.map(category => ({
-          ...category,
-          SiteNames: category.SiteIds
-            ?.map(siteId => {
-              const site = sites.find(s => s.value === siteId.toString());
-              return site?.label;
-            })
-            .filter(Boolean)
-            .join(', ') || 'No Sites'
-        }));
-
-        setData(transformedCategories);
+        console.log("Fetching categories...");
+        const categoriesData = await client.get('/api/checklist/categories');
+        console.log("Categories fetched:", categoriesData);
+        if (isMounted) {
+          setRawCategories(categoriesData || []);
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
-      } finally {
-        setLoading(false);
+        if (isMounted) setFetchError("Failed to load categories.");
       }
     };
 
-    if (sites.length > 0) {
-      fetchCategories();
+    fetchCategories();
+
+    return () => { isMounted = false; };
+  }, [client, reloadTrigger]);
+
+  useEffect(() => {
+    if (rawSites !== null && rawCategories !== null) {
+      try {
+        console.log("Processing categories with sites...");
+        const sitesMap = Object.fromEntries(
+          (Array.isArray(rawSites) ? rawSites : [])
+            .filter(site => site && site.SiteId !== undefined && site.SiteName !== undefined)
+            .map(site => [site.SiteId.toString(), site.SiteName])
+        );
+
+        const transformedCategories = (Array.isArray(rawCategories) ? rawCategories : []).map(category => ({
+          ...category,
+          SiteNames: (Array.isArray(category.SiteIds) ? category.SiteIds : [])
+            .map(siteId => sitesMap[siteId.toString()] || `Unknown (${siteId})`)
+            .filter(Boolean)
+            .join(', ') || 'No Sites Assigned'
+        }));
+
+        console.log("Transformed categories:", transformedCategories);
+        setData(transformedCategories);
+        setFetchError(null);
+
+      } catch (error) {
+        console.error("Failed to process category/site data:", error);
+        setFetchError("Failed to process data.");
+        setData([]);
+      } finally {
+        console.log("Processing finished, setting loading false.");
+        setLoading(false);
+      }
+    } else if (fetchError) {
+      console.log("Fetch error occurred, setting loading false.");
+      setLoading(false);
     }
-  }, [client, reloadTrigger, sites]);
+  }, [rawCategories, rawSites, fetchError]);
 
   const formContent = (
     <Form
@@ -100,13 +146,7 @@ const CategoryForm = ({ title }) => {
             options={sites}
             labelKey="label"
             valueKey={{ key: "value", reduce: true }}
-            value={formValues.SiteIds}
-            onChange={({ value }) => {
-              setFormValues(prev => ({
-                ...prev,
-                SiteIds: value
-              }));
-            }}
+            value={formValues.SiteIds || []}
           />
         </FormField>
 
@@ -146,7 +186,7 @@ const CategoryForm = ({ title }) => {
               onClick: () => {
                 setEditCategory(datum);
                 setFormValues({
-                  SiteIds: datum.SiteIds || [],
+                  SiteIds: (Array.isArray(datum.SiteIds) ? datum.SiteIds : []).map(String),
                   CategoryName: datum.CategoryName,
                   Description: datum.Description,
                 });
@@ -164,66 +204,45 @@ const CategoryForm = ({ title }) => {
   ];
 
   const handleReload = () => {
+    console.log("Reload triggered");
     setReloadTrigger(prev => prev + 1);
+    setRawSites(null);
+    setRawCategories(null);
+    setFetchError(null);
   };
 
   const handleAdd = async () => {
     try {
-      setLoading(true);
       const submitData = {
         ...formValues,
         SiteIds: formValues.SiteIds.map(id => parseInt(id, 10))
       };
-      await client.post('/api/admin/checklist/categories', submitData);
-      setReloadTrigger(prev => prev + 1);
-      setAddCategory(false);
-      setFormValues({
-        SiteIds: [],
-        CategoryName: '',
-        Description: '',
-      });
-      return true;
+      return client.post('/api/admin/checklist/categories', submitData);
     } catch (error) {
       console.error('Error adding category:', error);
-      setLoading(false);
-      return false;
+      throw error;
     }
   };
 
   const handleEdit = async () => {
     try {
-      setLoading(true);
       const submitData = {
         ...formValues,
         SiteIds: formValues.SiteIds.map(id => parseInt(id, 10))
       };
-      await client.put(`/api/admin/checklist/categories/${editCategory.CategoryId}`, submitData);
-      setReloadTrigger(prev => prev + 1);
-      setEditCategory(null);
-      setFormValues({
-        SiteIds: [],
-        CategoryName: '',
-        Description: '',
-      });
-      return true;
+      return client.put(`/api/admin/checklist/categories/${editCategory.CategoryId}`, submitData);
     } catch (error) {
       console.error('Error updating category:', error);
-      setLoading(false);
-      return false;
+      throw error;
     }
   };
 
   const handleDelete = async () => {
     try {
-      setLoading(true);
-      await client.delete(`/api/admin/checklist/categories/${deleteCategory.CategoryId}`);
-      setReloadTrigger(prev => prev + 1);
-      setDeleteCategory(null);
-      return true;
+      return client.delete(`/api/admin/checklist/categories/${deleteCategory.CategoryId}`);
     } catch (error) {
       console.error('Error deleting category:', error);
-      setLoading(false);
-      return false;
+      throw error;
     }
   };
 
@@ -283,9 +302,19 @@ const CategoryForm = ({ title }) => {
               Description: '',
             });
           }}
+          onSuccess={() => {
+            handleReload();
+            setAddCategory(false);
+            setFormValues({
+              SiteIds: [],
+              CategoryName: '',
+              Description: '',
+            });
+          }}
           yesPrompt="Add"
           noPrompt="Cancel"
           estimatedTime={5}
+          progressLabel={`Adding category ${formValues.CategoryName}...`}
         />
       )}
 
@@ -295,7 +324,16 @@ const CategoryForm = ({ title }) => {
           text={formContent}
           onConfirm={handleEdit}
           onClose={() => {
-            setEditCategory(null);
+            setEditCategory(false);
+            setFormValues({
+              SiteIds: [],
+              CategoryName: '',
+              Description: '',
+            });
+          }}
+          onSuccess={() => {
+            handleReload();
+            setEditCategory(false);
             setFormValues({
               SiteIds: [],
               CategoryName: '',
@@ -305,6 +343,7 @@ const CategoryForm = ({ title }) => {
           yesPrompt="Save"
           noPrompt="Cancel"
           estimatedTime={5}
+          progressLabel={`Editing category ${formValues.CategoryName}...`}
         />
       )}
 
@@ -313,14 +352,29 @@ const CategoryForm = ({ title }) => {
           title="Delete Category"
           text={`Are you sure you want to delete "${deleteCategory.CategoryName}"?`}
           onConfirm={handleDelete}
-          onClose={() => setDeleteCategory(null)}
+          onClose={() => setDeleteCategory(false)}
           yesPrompt="Delete"
           noPrompt="Cancel"
           estimatedTime={5}
+          onSuccess={() => {
+            handleReload();
+            setDeleteCategory(false);
+          }}
+          progressLabel={`Deleting category ${deleteCategory.CategoryName}...`}
         />
+      )}
+
+      {fetchError && (
+        <Box background="status-critical" pad="medium" margin={{bottom: "medium"}} round="small">
+          <Text color="white">Error: {fetchError}</Text>
+        </Box>
       )}
     </Box>
   );
+};
+
+CategoryForm.propTypes = {
+  title: PropTypes.string.isRequired,
 };
 
 export default CategoryForm;

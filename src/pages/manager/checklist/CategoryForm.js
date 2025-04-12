@@ -274,6 +274,7 @@ const CategoryForm = ({ title }) => {
           yesPrompt="Save"
           noPrompt="Cancel"
           estimatedTime={5}
+          progressLabel={`Editing category ${formValues.CategoryName}...`}
         />
       )}
 
@@ -286,6 +287,7 @@ const CategoryForm = ({ title }) => {
           yesPrompt="Delete"
           noPrompt="Cancel"
           estimatedTime={5}
+          progressLabel={`Deleting category ${deleteCategory.CategoryName}...`}
         />
       )}
     </Box>

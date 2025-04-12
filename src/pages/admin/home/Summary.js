@@ -1,11 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Box,
   Card,
   CardBody,
   CardHeader,
   Grid,
-  Meter,
   Stack,
   Text,
   Button,
@@ -13,11 +12,12 @@ import {
 import { Group, Location, Help, Star, LinkNext } from 'grommet-icons';
 import { SessionContext, useMonitor } from '../../../context/session';
 import { useNavigate } from 'react-router-dom';
+import AnimatedMeter from '../../../components/AnimatedMeter';
 
 const Summary = () => {
   const { client } = useContext(SessionContext);
   const navigate = useNavigate();
-  const [stats, setStats] = React.useState({
+  const [stats, setStats] = useState({
     users: 0,
     sites: 0,
     categories: 0,
@@ -46,9 +46,7 @@ const Summary = () => {
     }) => {
       if (users && sites && categories && questions && feedbacks) {
         let totalRating = 0;
-        feedbacks.forEach(feedback => {
-          totalRating += parseInt(feedback.rating);
-        });
+        feedbacks.forEach(f => totalRating += parseInt(f.rating));
 
         setStats({
           users: users.length,
@@ -66,233 +64,96 @@ const Summary = () => {
 
   return (
     <Box fill pad={{ horizontal: "medium", vertical: "small" }} gap="medium">
-      {/* Top Stats Cards - Responsive grid with better spacing */}
-      <Grid
-        columns={{
-          count: 'fit',
-          size: ['auto', 'small']
-        }}
-        rows="auto"
-        gap="medium"
-        fill="horizontal"
-        margin={{ bottom: "medium" }}
-      >
-        {/* Total Users Card */}
-        <Card background="brand" elevation="none" height="xsmall">
-          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Box direction="row" justify="between" align="center" fill>
-              <Box direction="row" gap="small" align="center">
-                <Group color="light-1" />
-                <Text color="light-1" size="small">Total Users</Text>
+      <Grid columns={{ count: 'fit', size: ['auto', 'small'] }} gap="medium" fill="horizontal">
+        {/* Cards for stats */}
+        {[
+          { label: 'Total Users', icon: <Group />, count: stats.users, path: '/masters/users', bg: 'brand' },
+          { label: 'Total Sites', icon: <Location />, count: stats.sites, path: '/masters/sites', bg: 'black' },
+          { label: 'Questions', icon: <Help />, count: stats.questions, path: '/masters/site-questions', bg: 'black' },
+          { label: 'Total Ratings', icon: <Star />, count: stats.totalFeedbacks, path: '/feedback/view-feedback', bg: 'status-warning' },
+        ].map(({ label, icon, count, path, bg }) => (
+          <Card key={label} background={bg} elevation="none" height="xsmall">
+            <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
+              <Box direction="row" justify="between" align="center" fill>
+                <Box direction="row" gap="small" align="center">
+                  {icon}
+                  <Text color="light-1" size="small">{label}</Text>
+                </Box>
+                <Button plain icon={<LinkNext size="small" color="light-1" />} onClick={() => navigate(path)} />
               </Box>
-              <Button
-                plain
-                icon={<LinkNext size="small" color="light-1" />}
-                onClick={() => navigate('/masters/users')}
-              />
-            </Box>
-          </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
-            <Text size="xlarge" weight="bold" color="light-1">
-              {stats.users}
-            </Text>
-          </CardBody>
-        </Card>
-
-        {/* Total Sites Card */}
-        <Card background="black" elevation="none" height="xsmall">
-          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Box direction="row" justify="between" align="center" fill>
-              <Box direction="row" gap="small" align="center">
-                <Location color="light-1" />
-                <Text color="light-1" size="small">Total Sites</Text>
-              </Box>
-              <Button
-                plain
-                icon={<LinkNext size="small" color="light-1" />}
-                onClick={() => navigate('/masters/sites')}
-              />
-            </Box>
-          </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
-            <Text size="xlarge" weight="bold" color="light-1">
-              {stats.sites}
-            </Text>
-          </CardBody>
-        </Card>
-
-        {/* Questions Card */}
-        <Card background="black" elevation="none" height="xsmall">
-          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Box direction="row" justify="between" align="center" fill>
-              <Box direction="row" gap="small" align="center">
-                <Help color="light-1" />
-                <Text color="light-1" size="small">Questions</Text>
-              </Box>
-              <Button
-                plain
-                icon={<LinkNext size="small" color="light-1" />}
-                onClick={() => navigate('/masters/site-questions')}
-              />
-            </Box>
-          </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
-            <Text size="xlarge" weight="bold" color="light-1">
-              {stats.questions}
-            </Text>
-          </CardBody>
-        </Card>
-
-        {/* Total Ratings Card */}
-        <Card background="status-warning" elevation="none" height="xsmall">
-          <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
-            <Box direction="row" justify="between" align="center" fill>
-              <Box direction="row" gap="small" align="center">
-                <Star color="light-1" />
-                <Text color="light-1" size="small">Total Ratings</Text>
-              </Box>
-              <Button
-                plain
-                icon={<LinkNext size="small" color="light-1" />}
-                onClick={() => navigate('/feedback/view-feedback')}
-              />
-            </Box>
-          </CardHeader>
-          <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
-            <Text size="xlarge" weight="bold" color="light-1">
-              {stats.totalFeedbacks}
-            </Text>
-          </CardBody>
-        </Card>
+            </CardHeader>
+            <CardBody pad={{ horizontal: 'medium', bottom: 'medium' }}>
+              <Text size="xlarge" weight="bold" color="light-1">{count}</Text>
+            </CardBody>
+          </Card>
+        ))}
       </Grid>
 
-      {/* Bottom Section - Better layout for details */}
-      <Grid
-        columns={["2/3", "1/3"]}
-        gap="medium"
-        fill="horizontal"
-      >
-        {/* Overall Rating Card */}
+      <Grid columns={["2/3", "1/3"]} gap="medium" fill="horizontal">
+        {/* Overall Rating */}
         <Card background="dark-1" elevation="none">
           <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Text color="light-1" weight="bold" size="small">Overall Rating</Text>
-              <Button
-                plain
-                icon={<LinkNext size="small" color="light-3" />}
-                onClick={() => navigate('/feedback/view-feedback')}
-              />
+              <Button plain icon={<LinkNext size="small" color="light-3" />} onClick={() => navigate('/feedback/view-feedback')} />
             </Box>
           </CardHeader>
           <CardBody pad="medium">
-            <Box
-              direction="row-responsive"
-              gap="large"
-              align="center"
-              justify="start"
-              height={{ min: "small" }}
-            >
+            <Box direction="row-responsive" gap="large" align="center">
               <Stack anchor="center">
-                <Meter
-                  type="circle"
+                <AnimatedMeter
+                  type="pie"
                   size="small"
-                  thickness="small"
-                  values={[{
-                    value: (stats.overallRating / 5) * 100,
-                    color: 'status-warning'
-                  }]}
+                  thickness="medium"
+                  background="dark-3"
+                  color="status-warning"
+                  target={(stats.overallRating / 5) * 100}
                 />
                 <Box align="center">
-                  <Text size="large" weight="bold" color="light-1">
-                    {stats.overallRating.toFixed(1)}
-                  </Text>
+                  <Text size="xlarge" weight="bold" color="accent-1">{stats.overallRating.toFixed(1)}</Text>
                   <Box direction="row" gap="xxsmall">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        color={star <= Math.round(stats.overallRating) ? 'status-warning' : 'dark-3'}
-                        size="small"
-                      />
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star key={star} color={star <= Math.round(stats.overallRating) ? 'accent-3' : 'dark-4'} size="small" />
                     ))}
                   </Box>
                 </Box>
               </Stack>
-              <Box>
-                <Text size="small" color="light-3">
-                  Based on {stats.totalFeedbacks} reviews
-                </Text>
-              </Box>
+              <Text size="medium" color="light-4" margin={{ top: "small" }}>Based on <Text weight="bold">{stats.totalFeedbacks}</Text> reviews</Text>
             </Box>
           </CardBody>
         </Card>
 
-        {/* Status Cards */}
+        {/* User & Site Status */}
         <Box gap="medium">
-          {/* User Status Card */}
-          <Card background="dark-1" elevation="none">
-            <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
-              <Box direction="row" justify="between" align="center" fill>
-                <Text color="light-1" size="small">User Status</Text>
-                <Button
-                  plain
-                  icon={<LinkNext size="small" color="light-3" />}
-                  onClick={() => navigate('/masters/users')}
-                />
-              </Box>
-            </CardHeader>
-            <CardBody pad="medium" align="center">
-              <Stack anchor="center">
-                <Meter
-                  type="circle"
-                  size="xsmall"
-                  thickness="small"
-                  values={[{
-                    value: (stats.activeUsers / stats.users) * 100,
-                    color: 'brand'
-                  }]}
-                />
-                <Box align="center">
-                  <Text weight="bold" size="medium" color="light-1">
-                    {stats.activeUsers}
-                  </Text>
-                  <Text size="xsmall" color="light-3">Active</Text>
+          {[{
+            label: 'User Status', active: stats.activeUsers, total: stats.users, color: 'brand', path: '/masters/users'
+          }, {
+            label: 'Site Status', active: stats.activeSites, total: stats.sites, color: 'yellow', path: '/masters/sites'
+          }].map(({ label, active, total, color, path }) => (
+            <Card key={label} background="dark-1" elevation="none">
+              <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
+                <Box direction="row" justify="between" align="center" fill>
+                  <Text color="light-1" size="small">{label}</Text>
+                  <Button plain icon={<LinkNext size="small" color="light-3" />} onClick={() => navigate(path)} />
                 </Box>
-              </Stack>
-            </CardBody>
-          </Card>
-
-          {/* Site Status Card */}
-          <Card background="dark-1" elevation="none">
-            <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
-              <Box direction="row" justify="between" align="center" fill>
-                <Text color="light-1" size="small">Site Status</Text>
-                <Button
-                  plain
-                  icon={<LinkNext size="small" color="light-3" />}
-                  onClick={() => navigate('/masters/sites')}
-                />
-              </Box>
-            </CardHeader>
-            <CardBody pad="medium" align="center">
-              <Stack anchor="center">
-                <Meter
-                  type="circle"
-                  size="xsmall"
-                  thickness="small"
-                  values={[{
-                    value: (stats.activeSites / stats.sites) * 100,
-                    color: 'neutral-2'
-                  }]}
-                />
-                <Box align="center">
-                  <Text weight="bold" size="medium" color="light-1">
-                    {stats.activeSites}
-                  </Text>
-                  <Text size="xsmall" color="light-3">Active</Text>
-                </Box>
-              </Stack>
-            </CardBody>
-          </Card>
+              </CardHeader>
+              <CardBody pad="medium" align="center">
+                <Stack anchor="center">
+                  <AnimatedMeter
+                    type="pie"
+                    size="xsmall"
+                    thickness="small"
+                    color={color}
+                    target={(active / total) * 100 || 0}
+                  />
+                  <Box align="center">
+                    <Text weight="bold" size="medium" color="light-1">{active}</Text>
+                    <Text size="xsmall" color="light-3">Active</Text>
+                  </Box>
+                </Stack>
+              </CardBody>
+            </Card>
+          ))}
         </Box>
       </Grid>
     </Box>

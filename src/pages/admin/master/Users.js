@@ -3,40 +3,28 @@ import PropTypes from 'prop-types';
 import {
   Box,
   Button,
-  Cards,
-  Data,
-  DataFilter,
-  DataFilters,
-  DataSearch,
-  DataSummary,
-  DataTableColumns,
   Grid,
   Heading,
   Text,
-  Toolbar,
   Menu,
   Layer,
   Form,
   FormField,
   TextInput,
   Select,
-  CheckBoxGroup,
   SelectMultiple,
   Card,
   CheckBox,
 } from 'grommet';
 import { More, Edit, Trash, Search, Filter } from 'grommet-icons';
 import { ResponsiveContext } from 'grommet';
-import { ConfirmOperation, LoadingLayer, QLayer, CoverPage } from '../../../components';
-import { SessionContext, useMonitor } from '../../../context/session';
-import { FilteredDataTable, DataTableGroups, SelectedDataTable } from '../../../components/dataTable';
+import { ConfirmOperation, LoadingLayer } from '../../../components';
+import { SessionContext } from '../../../context/session';
 
 const ROLES = ['admin', 'manager', 'user'];
 
 const UserCard = ({ user, onEdit, onDelete }) => {
-  const breakpoint = useContext(ResponsiveContext);
-
-  return (
+return (
     <Card elevation="small">
       <Box pad="medium" gap="small">
         <Box direction="row" justify="between" align="center">
@@ -136,36 +124,93 @@ const UserTable = ({ title }) => {
     SiteIds: [],
   });
   const [sites, setSites] = useState([]);
+  const [rawUsers, setRawUsers] = useState(null);
+  const [rawSites, setRawSites] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  useMonitor(
-    client,
-    ['/api/users', '/api/sites'],
-    ({ ['/api/users']: userData, ['/api/sites']: siteData }) => {
-      if (!userData || !siteData) return;
+  useEffect(() => {
+    if (!client) return;
+    let isMounted = true;
+    setLoading(true);
+    setFetchError(null);
 
-      const sitesMap = Object.fromEntries(
-        siteData.map(site => [site.SiteId.toString(), site.SiteName])
-      );
+    const fetchUsers = async () => {
+      try {
+        const userData = await client.get('/api/users');
+        if (isMounted) {
+          setRawUsers(userData || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        if (isMounted) setFetchError("Failed to load users.");
+      } finally {
+      }
+    };
 
-      const transformedUsers = userData.map(user => ({
-        ...user,
-        SiteIds: user.SiteIds.map(siteId => sitesMap[siteId.toString()]
-          || 'Unknown Site')
-      }));
+    fetchUsers();
 
-      setUsers(transformedUsers);
-      setSites(siteData.map(site => ({
-        label: site.SiteName,
-        value: site.SiteId.toString(),
-      })));
+    return () => { isMounted = false; };
+  }, [client, reloadTrigger]);
+
+  useEffect(() => {
+    if (!client) return;
+    let isMounted = true;
+    setFetchError(null);
+
+    const fetchSites = async () => {
+      try {
+        const siteData = await client.get('/api/sites');
+        if (isMounted) {
+          setRawSites(siteData || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sites:", error);
+        if (isMounted) setFetchError("Failed to load sites.");
+      } finally {
+      }
+    };
+
+    fetchSites();
+
+    return () => { isMounted = false; };
+  }, [client, reloadTrigger]);
+
+  useEffect(() => {
+    if (rawUsers && rawSites) {
+      try {
+        const sitesMap = Object.fromEntries(
+          rawSites.map(site => [site.SiteId.toString(), site.SiteName])
+        );
+
+        const transformedUsers = rawUsers.map(user => ({
+          ...user,
+          SiteIds: Array.isArray(user.SiteIds) ? user.SiteIds.map(siteId => sitesMap[siteId.toString()] || 'Unknown Site') : [],
+        }));
+
+        setUsers(transformedUsers);
+        setSites(rawSites.map(site => ({
+          label: site.SiteName,
+          value: site.SiteId.toString(),
+        })));
+        setFetchError(null);
+      } catch (error) {
+        console.error("Failed to process user/site data:", error);
+        setFetchError("Failed to process data.");
+        setUsers([]);
+        setSites([]);
+      } finally {
+        setLoading(false);
+      }
+    } else if (fetchError) {
       setLoading(false);
-    },
-    [reloadTrigger]
-  );
+    }
+  }, [rawUsers, rawSites, fetchError]);
 
   const handleReload = () => {
     setLoading(true);
+    setRawUsers(null);
+    setRawSites(null);
     setReloadTrigger(prev => prev + 1);
   };
 
@@ -191,7 +236,7 @@ const UserTable = ({ title }) => {
   const formContent = (
     <Form value={formValues} onChange={setFormValues}>
       <Box gap="medium">
-        <FormField name="Username" label="Username" required>
+        <FormField name="Username" label="Name" required>
           <TextInput name="Username" />
         </FormField>
 
@@ -352,6 +397,7 @@ const UserTable = ({ title }) => {
             handleReload();
             setEditUser(null);
           }}
+          progressLabel={`Editing user ${formValues.Username}...`}
         />
       )}
 
@@ -368,6 +414,7 @@ const UserTable = ({ title }) => {
             handleReload();
             setDeleteUser(null);
           }}
+          progressLabel={`Deleting user ${deleteUser.Username}...`}
         />
       )}
     </Box>

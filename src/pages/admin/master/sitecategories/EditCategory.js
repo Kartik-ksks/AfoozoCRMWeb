@@ -64,6 +64,7 @@ const EditCategory = ({ category, onClose, onSave }) => {
       noPrompt="Cancel"
       estimatedTime={5}
       onSuccess={onSave}
+      progressLabel={`Editing category ${formValues.CategoryName}...`}
     />
   );
 };

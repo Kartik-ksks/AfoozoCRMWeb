@@ -188,6 +188,7 @@ const CategoryTable = ({ title }) => {
                 <AddCategory
                     onClose={() => setShowAdd(false)}
                     onSave={() => {
+                        handleReload();
                         setShowAdd(false);
                     }}
                 />
@@ -217,6 +218,7 @@ const CategoryTable = ({ title }) => {
                         handleReload();
                         setDeleteCategory(null);
                     }}
+                    progressLabel={`Deleting category ${deleteCategory.CategoryName}...`}
                 />
             )}
         </Box>

@@ -241,6 +241,7 @@ const AddSite = ({ onClose, onSave }) => {
       estimatedTime={5}
       onClose={onClose}
       onSuccess={onSave}
+      progressLabel={`Adding site ${formValues.SiteName}...`}
     />
   );
 };

@@ -209,6 +209,7 @@ const CategoryTable = ({ title }) => {
                     noPrompt="Cancel"
                     estimatedTime={5}
                     onSuccess={() => setDeleteCategory(null)}
+                    progressLabel={`Deleting category ${deleteCategory.CategoryName}...`}
                 />
             )}
         </Box>

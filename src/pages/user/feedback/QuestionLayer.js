@@ -179,6 +179,7 @@ const QuestionLayer = ({ questions, onClose, onSubmit }) => {
                     yesPrompt="Submit"
                     noPrompt="Cancel"
                     estimatedTime={5}
+                    progressLabel={`Submitting feedback...`}
                 />
             )}
         </Layer>

@@ -26,19 +26,27 @@ const QuestionTypeComponent = ({ question, value, onChange }) => {
             return (
                 <Box gap="small">
                     <Box direction="row" align="center" gap="small">
-                        <Box direction="row" align="center">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                    key={star}
-                                    color={star <= (value || 0) ? 'status-warning' : 'light-4'}
-                                    onClick={() => onChange(star)}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                            ))}
-                        </Box>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                                key={star}
+                                color={star <= (value || 0) ? 'status-warning' : 'light-4'}
+                                onClick={() => onChange(star)}
+                                style={{ cursor: 'pointer' }}
+                            />
+                        ))}
                     </Box>
                     <Text size="small" color="dark-6">
-                        {value === 1 ? 'Poor' : value === 2 ? 'Fair' : value === 3 ? 'Good' : value === 4 ? 'Very Good' : value === 5 ? 'Excellent' : 'Select Rating'}
+                        {value === 1
+                            ? 'Poor'
+                            : value === 2
+                                ? 'Fair'
+                                : value === 3
+                                    ? 'Good'
+                                    : value === 4
+                                        ? 'Very Good'
+                                        : value === 5
+                                            ? 'Excellent'
+                                            : 'Select Rating'}
                     </Text>
                 </Box>
             );
@@ -91,7 +99,7 @@ const FeedbackForm = () => {
         try {
             const response = await client.get(`/api/sites-scan`);
             if (response) {
-                response.forEach(site => {
+                response.forEach((site) => {
                     if (site.SiteId === parseInt(siteId)) {
                         setSiteName(site.SiteName);
                     }
@@ -104,17 +112,18 @@ const FeedbackForm = () => {
 
     const fetchQuestions = async () => {
         try {
-            const response = await client.get(`/api/questions-scan/filter?siteId=${siteId}`);
+            const response = await client.get(
+                `/api/questions-scan/filter?siteId=${siteId}`
+            );
             if (response) {
                 setQuestions(response);
-                // Initialize questions array with empty answers
-                setFormData(prev => ({
+                setFormData((prev) => ({
                     ...prev,
-                    questions: response.map(q => ({
+                    questions: response.map((q) => ({
                         questionId: q.QuestionId,
                         answer: q.QuestionType === 'rating' ? 5 : '',
-                        comment: ''
-                    }))
+                        comment: '',
+                    })),
                 }));
             }
         } catch (error) {
@@ -126,26 +135,23 @@ const FeedbackForm = () => {
 
     const handleSatisfactionChange = (value) => {
         setSatisfied(value);
-        // Pre-fill all questions with the corresponding rating if satisfied or excellent
-        // Only show questions if not satisfied (value = 1)
         if (value === 3 || value === 5) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                questions: questions.map(q => ({
+                questions: questions.map((q) => ({
                     questionId: q.QuestionId,
-                    answer: value, // Pre-fill with 3 or 5
-                    comment: ''
-                }))
+                    answer: value,
+                    comment: '',
+                })),
             }));
         } else if (value === 1) {
-            // If not satisfied, potentially clear or set default (e.g., 1) for display
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                questions: questions.map(q => ({
+                questions: questions.map((q) => ({
                     questionId: q.QuestionId,
-                    answer: q.QuestionType === 'rating' ? 1 : '', // Default to 1 or empty based on type
-                    comment: ''
-                }))
+                    answer: q.QuestionType === 'rating' ? 1 : '',
+                    comment: '',
+                })),
             }));
         }
     };
@@ -172,33 +178,34 @@ const FeedbackForm = () => {
         }
 
         try {
-            // Transform questions array only if not satisfied
-            const transformedQuestions = satisfied === 1 ? formData.questions
-                .filter(q => q.answer !== '' && q.answer !== null) // Only include questions with answers
-                .map(q => ({
-                    questionId: q.questionId,
-                    answer: q.answer.toString() // Ensure answer is a string
-                })) : []; // Empty array if satisfied or excellent
+            const transformedQuestions =
+                satisfied === 1
+                    ? formData.questions
+                        .filter((q) => q.answer !== '' && q.answer !== null)
+                        .map((q) => ({
+                            questionId: q.questionId,
+                            answer: q.answer.toString(),
+                        }))
+                    : [];
 
             const payload = {
                 username: formData.username,
                 email: formData.email,
-                siteIds: [parseInt(siteId)], // Convert siteId to number and wrap in array
+                siteIds: [parseInt(siteId)],
                 questions: transformedQuestions,
                 comment: formData.comment || '',
-                rating: satisfied // Send the selected satisfaction level (1, 3, or 5)
+                rating: satisfied,
             };
 
             await client.post('/api/question-feedback-scan', payload);
             setStatus('success');
-            // Reset form
             setFormData({
                 username: '',
                 email: '',
-                questions: questions.map(q => ({
+                questions: questions.map((q) => ({
                     questionId: q.QuestionId,
                     answer: q.QuestionType === 'rating' ? 5 : '',
-                    comment: ''
+                    comment: '',
                 })),
                 comment: '',
             });
@@ -214,11 +221,19 @@ const FeedbackForm = () => {
     }
 
     return (
-        <Box fill align="center" pad="medium" overflow="auto">
-            <Card background="light-1" elevation="small" width="large" flex={false} style={{ maxHeight: '90vh' }}>
+        <Box fill align="center" pad="medium" background="light-2">
+            <Card
+                background="light-1"
+                elevation="small"
+                width="large"
+                flex={false}
+                style={{ maxHeight: '90vh', width: '100%', overflow: 'hidden' }}
+            >
                 <CardHeader pad="medium" background="dark-2">
                     <Box>
-                        <Heading level={2} margin="none">Feedback Form</Heading>
+                        <Heading level={2} margin="none">
+                            Feedback Form
+                        </Heading>
                         {siteName && (
                             <Text size="large" weight="bold" margin={{ top: 'small' }}>
                                 Site: {siteName}
@@ -227,13 +242,22 @@ const FeedbackForm = () => {
                     </Box>
                 </CardHeader>
 
-                <CardBody pad="medium" overflow="auto">
+                <CardBody
+                    pad="medium"
+                    overflow="auto"
+                    style={{ maxHeight: 'calc(90vh - 120px)', overflowY: 'auto' }}
+                >
                     <Form onSubmit={handleSubmit}>
-                        <Box gap="medium" overflow="visible">
+                        <Box gap="medium">
                             <FormField label="Name" error={errors.username}>
                                 <TextInput
                                     value={formData.username}
-                                    onChange={e => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            username: e.target.value,
+                                        }))
+                                    }
                                     placeholder="Enter your name"
                                 />
                             </FormField>
@@ -242,85 +266,55 @@ const FeedbackForm = () => {
                                 <TextInput
                                     type="email"
                                     value={formData.email}
-                                    onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            email: e.target.value,
+                                        }))
+                                    }
                                     placeholder="Enter your email"
                                 />
                             </FormField>
 
                             <FormField
                                 label="How satisfied are you with our service?"
-                                border={false}
                                 error={errors.satisfied}
-                                plain
-                                style={{
-                                    padding: 0,
-                                    margin: 0,
-                                    border: 'none',
-                                    background: 'none',
-                                    boxShadow: 'none'
-                                }}
+                                border={false}
                             >
-                                <Box direction="row" gap="medium" justify="center" margin={{ top: 'small', bottom: 'medium' }} wrap plain style={{ border: 'none', background: 'none', boxShadow: 'none' }}>
-                                    <Button
-                                        plain
-                                        onClick={() => handleSatisfactionChange(1)}
-                                        focusIndicator={false}
-                                        style={{
-                                            padding: '12px 24px',
-                                            borderRadius: '8px',
-                                            background: satisfied === 1 ? 'rgba(255, 0, 0, 0.1)' : 'white',
-                                            border: '2px solid',
-                                            borderColor: satisfied === 1 ? 'status-critical' : 'light-4',
-                                            transition: 'all 0.2s ease',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}
-                                    >
-                                        <Text size="xlarge">☹️</Text>
-                                        <Text color={satisfied === 1 ? 'status-critical' : 'dark-6'}>Not Satisfied</Text>
-                                    </Button>
-                                    <Button
-                                        plain
-                                        onClick={() => handleSatisfactionChange(3)}
-                                        focusIndicator={false}
-                                        style={{
-                                            padding: '12px 24px',
-                                            borderRadius: '8px',
-                                            background: satisfied === 3 ? 'rgba(255, 193, 7, 0.1)' : 'white', // Yellowish background
-                                            border: '2px solid',
-                                            borderColor: satisfied === 3 ? 'status-warning' : 'light-4',
-                                            transition: 'all 0.2s ease',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}
-                                    >
-                                        <Text size="xlarge">😊</Text>
-                                        <Text color={satisfied === 3 ? 'status-warning' : 'dark-6'}>Satisfied</Text>
-                                    </Button>
-                                    <Button
-                                        plain
-                                        onClick={() => handleSatisfactionChange(5)}
-                                        focusIndicator={false}
-                                        style={{
-                                            padding: '12px 24px',
-                                            borderRadius: '8px',
-                                            background: satisfied === 5 ? 'rgba(0, 128, 0, 0.1)' : 'white',
-                                            border: '2px solid',
-                                            borderColor: satisfied === 5 ? 'status-ok' : 'light-4',
-                                            transition: 'all 0.2s ease',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}
-                                    >
-                                        <Text size="xlarge">😄</Text>
-                                        <Text color={satisfied === 5 ? 'status-ok' : 'dark-6'}>Excellent</Text>
-                                    </Button>
+                                <Box
+                                    direction="row"
+                                    gap="medium"
+                                    justify="center"
+                                    wrap
+                                    margin={{ top: 'small', bottom: 'medium' }}
+                                >
+                                    {[
+                                        { value: 1, emoji: '☹️', label: 'Not Satisfied' },
+                                        { value: 3, emoji: '😊', label: 'Satisfied' },
+                                        { value: 5, emoji: '😄', label: 'Excellent' },
+                                    ].map(({ value, emoji, label }) => (
+                                        <Button
+                                            key={value}
+                                            plain
+                                            onClick={() => handleSatisfactionChange(value)}
+                                            style={{
+                                                padding: '12px 24px',
+                                                borderRadius: '8px',
+                                                background:
+                                                    satisfied === value ? 'rgba(0,0,0,0.05)' : 'white',
+                                                border: '2px solid',
+                                                borderColor:
+                                                    satisfied === value ? 'brand' : 'light-4',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            <Text size="xlarge">{emoji}</Text>
+                                            <Text>{label}</Text>
+                                        </Button>
+                                    ))}
                                 </Box>
                             </FormField>
 
@@ -334,9 +328,12 @@ const FeedbackForm = () => {
                                                 const newQuestions = [...formData.questions];
                                                 newQuestions[index] = {
                                                     ...newQuestions[index],
-                                                    answer: value
+                                                    answer: value,
                                                 };
-                                                setFormData(prev => ({ ...prev, questions: newQuestions }));
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    questions: newQuestions,
+                                                }));
                                             }}
                                         />
                                     </FormField>
@@ -346,7 +343,12 @@ const FeedbackForm = () => {
                             <FormField label="Additional Comments">
                                 <TextArea
                                     value={formData.comment}
-                                    onChange={e => setFormData(prev => ({ ...prev, comment: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            comment: e.target.value,
+                                        }))
+                                    }
                                     placeholder="Please share your overall experience..."
                                 />
                             </FormField>
