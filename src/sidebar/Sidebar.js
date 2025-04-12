@@ -19,7 +19,7 @@ const Sidebar = ({ showSidebar, background, setShowSidebar, isMobile }) => {
       background={background || 'neutral-2'}
       elevation="large"
       direction={isBreak ? 'column' : 'column'}
-      width={isBreak ? '85vw' : !['xsmall', 'small'].includes(size) ? 'medium' : undefined}
+      width={isBreak ? '85vw' : !['xsmall', 'small'].includes(size) ? 'small' : undefined}
       height={isBreak ? '100vh' : 'full'}
       overflow="visible"
     >
@@ -43,11 +43,11 @@ const Sidebar = ({ showSidebar, background, setShowSidebar, isMobile }) => {
         className="scroll-enabled"
         height="full"
       >
-        {!isBreak && <SidebarHeader
+        {/* {!isBreak && <SidebarHeader
           name={client?.session?.username}
           email={client?.session?.email}
           role={client?.session?.role}
-        />}
+        />} */}
         <MultiLevelSidebar compact={isBreak} />
       </Box>
     </Box>

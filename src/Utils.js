@@ -11,11 +11,10 @@ import CryptoJS from 'crypto-js';
 // const SECRET_KEY = process.env.REACT_APP_SECRET_KEY;
 export const encryptData = (data) => {
   try {
-    console.log('SECRET_KEY', process.env.REACT_APP_SECRET_KEY);
     const ciphertext = CryptoJS.AES.encrypt(JSON.stringify(data), process.env.REACT_APP_SECRET_KEY).toString();
     return ciphertext;
   } catch (error) {
-    console.error('Encryption error:', error);
+    // console.error('Encryption error:', error);
     return null;
   }
 };
@@ -26,7 +25,7 @@ export const decryptData = (ciphertext) => {
     const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
     return decryptedData;
   } catch (error) {
-    console.error('Decryption error:', error);
+    // console.error('Decryption error:', error);
     return null;
   }
 };

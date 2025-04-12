@@ -93,16 +93,21 @@ const MultiLevelMenu = ({ menu, compact }) => {
                 <Box
                   direction="row"
                   align="center"
-                  pad={{ horizontal: 'small', vertical: 'xsmall' }}
+                  pad={{ horizontal: 'large', vertical: 'xsmall' }}
                   height="40px"
                   border={{ side: 'bottom', color: 'rgba(255, 255, 255, 0.1)', size: '1px' }}
                   background="rgba(0, 0, 0, 0.1)"
+                  gap="small"
                 >
-                  <Box basis="8px" />
-                  <Box basis="32px" flex={false} justify="center">
+                  <Box flex={false} justify="center" align="center">
                     {item.Icon || null}
                   </Box>
-                  <Text size="small" weight="normal">
+                  <Text
+                    size="small"
+                    weight="normal"
+                    textAlign="left"
+                    style={{ whiteSpace: 'nowrap' }} // prevents wrapping
+                  >
                     {item.title}
                   </Text>
                 </Box>
