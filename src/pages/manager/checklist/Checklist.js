@@ -7,8 +7,7 @@ import {
   Heading,
   Text,
   Select,
-  Button,
-  Grid,
+  RadioButtonGroup,
 } from 'grommet';
 import { SessionContext, useMonitor } from '../../../context/session';
 import ChecklistItems from './ChecklistItems';
@@ -86,14 +85,17 @@ const Checklist = () => {
               value={selectedSite}
               onChange={({ value }) => setSelectedSite(value.value)}
             />
-            <Select
-              placeholder="Choose a category"
-              options={categories}
-              labelKey="label"
-              valueKey="value"
-              value={selectedCategory}
-              onChange={({ value }) => setSelectedCategory(value.value)}
-            />
+            {selectedSite && (
+              <Box width="medium" margin={{ top: 'medium', bottom: 'medium' }}>
+                <Text size="small" weight="bold" margin={{ bottom: 'xsmall' }}>Select Category:</Text>
+                <RadioButtonGroup
+                  name="categorySelect"
+                  options={categories}
+                  value={selectedCategory}
+                  onChange={(event) => setSelectedCategory(event.target.value)}
+                />
+              </Box>
+            )}
           </Box>
         </CardBody>
       </Card>
