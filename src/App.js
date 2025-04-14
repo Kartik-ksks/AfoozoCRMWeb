@@ -54,7 +54,7 @@ const App = () => {
         <HashRouter>
           <SessionProvider>
             <ResponsiveProvider>
-              {/* <NotificationProvider> */}
+              <NotificationProvider>
                 <MenuProvider>
                   <MenuApp
                     themeMode={themeMode}
@@ -63,7 +63,7 @@ const App = () => {
                   <PWAInstallPrompt />
                   {process.env.NODE_ENV === 'development' && <PWADebug />}
                 </MenuProvider>
-              {/* </NotificationProvider> */}
+              </NotificationProvider>
             </ResponsiveProvider>
           </SessionProvider>
         </HashRouter>

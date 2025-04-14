@@ -38,6 +38,7 @@ export const NotificationProvider = ({ children }) => {
 
   const fetchNotifications = async () => {
     try {
+      console.log('fetching notifications');
       const response = await client.get('/api/checklist/notifications');
       if (response.data) {
         setNotifications(response.data);
