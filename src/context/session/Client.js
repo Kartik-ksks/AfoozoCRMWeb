@@ -437,6 +437,7 @@ class AfoozoClient {
           // token expired login again
           this.sessionExpired();
           this.rmSession();
+          this.navigate('/login');
         }
         return res.json();
       })
@@ -559,7 +560,6 @@ class AfoozoClient {
     this.resourceCache = {};
     this.loadingCache = {};
     this.eventsFailed = false;
-    this.navigate('/login');
     // if (window.localStorage.getItem('sse-owner') === TAB_ID) {
     //   window.localStorage.removeItem('sse-owner');
     // }

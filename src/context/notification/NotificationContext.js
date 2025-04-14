@@ -25,14 +25,16 @@ const NotificationTemplate = {
 export const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
-  const { client } = useContext(SessionContext);
+  const { client, loggedIn } = useContext(SessionContext);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    fetchNotifications();
-    setupSocketListeners();
-  }, [client]);
+    if (loggedIn) {
+      fetchNotifications();
+      setupSocketListeners();
+    }
+  }, [client, loggedIn]);
 
   const fetchNotifications = async () => {
     try {

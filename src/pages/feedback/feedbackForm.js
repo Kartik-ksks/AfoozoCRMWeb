@@ -135,25 +135,16 @@ const FeedbackForm = () => {
 
     const handleSatisfactionChange = (value) => {
         setSatisfied(value);
-        if (value === 3 || value === 5) {
-            setFormData((prev) => ({
-                ...prev,
-                questions: questions.map((q) => ({
-                    questionId: q.QuestionId,
-                    answer: value,
-                    comment: '',
-                })),
-            }));
-        } else if (value === 1) {
-            setFormData((prev) => ({
-                ...prev,
-                questions: questions.map((q) => ({
-                    questionId: q.QuestionId,
-                    answer: q.QuestionType === 'rating' ? 1 : '',
-                    comment: '',
-                })),
-            }));
-        }
+        const defaultAnswer =
+            value === 3 || value === 5 ? value : value === 1 ? 1 : '';
+        setFormData((prev) => ({
+            ...prev,
+            questions: questions.map((q) => ({
+                questionId: q.QuestionId,
+                answer: q.QuestionType === 'rating' ? defaultAnswer : '',
+                comment: '',
+            })),
+        }));
     };
 
     const handleSubmit = async (event) => {
@@ -216,18 +207,24 @@ const FeedbackForm = () => {
         }
     };
 
-    if (loading) {
-        return <LoadingLayer />;
-    }
+    if (loading) return <LoadingLayer />;
 
     return (
-        <Box fill align="center" pad="medium" background="light-2">
+        <Box
+            fill
+            overflow="hidden"
+            style={{ height: '100vh' }}
+            background="light-2"
+        >
             <Card
                 background="light-1"
                 elevation="small"
-                width="large"
-                flex={false}
-                style={{ maxHeight: '90vh', width: '100%', overflow: 'hidden' }}
+                width="100%"
+                height="100%"
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
             >
                 <CardHeader pad="medium" background="dark-2">
                     <Box>
@@ -244,8 +241,9 @@ const FeedbackForm = () => {
 
                 <CardBody
                     pad="medium"
-                    overflow="auto"
-                    style={{ maxHeight: 'calc(90vh - 120px)', overflowY: 'auto' }}
+                    overflow={{ vertical: 'auto' }}
+                    flex="grow"
+                    style={{ overflowY: 'auto' }}
                 >
                     <Form onSubmit={handleSubmit}>
                         <Box gap="medium">
@@ -279,47 +277,70 @@ const FeedbackForm = () => {
                             <FormField
                                 label="How satisfied are you with our service?"
                                 error={errors.satisfied}
-                                border={false}
                             >
                                 <Box
                                     direction="row"
                                     gap="medium"
                                     justify="center"
                                     wrap
-                                    margin={{ top: 'small', bottom: 'medium' }}
+                                    margin={{ top: 'small' }}
                                 >
-                                    {[
-                                        { value: 1, emoji: '☹️', label: 'Not Satisfied' },
-                                        { value: 3, emoji: '😊', label: 'Satisfied' },
-                                        { value: 5, emoji: '😄', label: 'Excellent' },
-                                    ].map(({ value, emoji, label }) => (
+                                    {[1, 3, 5].map((level) => (
                                         <Button
-                                            key={value}
+                                            key={level}
                                             plain
-                                            onClick={() => handleSatisfactionChange(value)}
+                                            onClick={() => handleSatisfactionChange(level)}
+                                            focusIndicator={false}
                                             style={{
                                                 padding: '12px 24px',
                                                 borderRadius: '8px',
                                                 background:
-                                                    satisfied === value ? 'rgba(0,0,0,0.05)' : 'white',
-                                                border: '2px solid',
-                                                borderColor:
-                                                    satisfied === value ? 'brand' : 'light-4',
+                                                    satisfied === level
+                                                        ? level === 1
+                                                            ? 'rgba(255, 0, 0, 0.1)'
+                                                            : level === 3
+                                                                ? 'rgba(255, 193, 7, 0.1)'
+                                                                : 'rgba(0, 128, 0, 0.1)'
+                                                        : 'white',
+                                                transition: 'all 0.2s ease',
+                                                cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '8px',
-                                                cursor: 'pointer',
                                             }}
                                         >
-                                            <Text size="xlarge">{emoji}</Text>
-                                            <Text>{label}</Text>
+                                            <Text size="xlarge">
+                                                {level === 1 ? '☹️' : level === 3 ? '😊' : '😄'}
+                                            </Text>
+                                            <Text
+                                                color={
+                                                    satisfied === level
+                                                        ? level === 1
+                                                            ? 'status-critical'
+                                                            : level === 3
+                                                                ? 'status-warning'
+                                                                : 'status-ok'
+                                                        : 'dark-6'
+                                                }
+                                            >
+                                                {level === 1
+                                                    ? 'Not Satisfied'
+                                                    : level === 3
+                                                        ? 'Satisfied'
+                                                        : 'Excellent'}
+                                            </Text>
                                         </Button>
                                     ))}
                                 </Box>
                             </FormField>
 
+
                             {questions.map((question, index) => (
-                                <Card key={question.QuestionId} background="light-2" pad="medium">
+                                <Card
+                                    key={question.QuestionId}
+                                    background="light-2"
+                                    pad="medium"
+                                >
                                     <FormField label={question.QuestionText}>
                                         <QuestionTypeComponent
                                             question={question}
@@ -358,7 +379,9 @@ const FeedbackForm = () => {
                                     type="submit"
                                     primary
                                     color="brand"
-                                    label={status === 'sending' ? 'Submitting...' : 'Submit Feedback'}
+                                    label={
+                                        status === 'sending' ? 'Submitting...' : 'Submit Feedback'
+                                    }
                                     disabled={status === 'sending'}
                                 />
                             </Box>

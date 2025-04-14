@@ -26,7 +26,6 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
         loggedIn,
         setLoggedIn,
         setSessionExpired,
-        sessionExpired,
         restoredSession,
         setRestoredSession,
         userRole,

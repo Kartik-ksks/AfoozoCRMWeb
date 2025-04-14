@@ -11,8 +11,8 @@ export default function AdminRoutes() {
             <Route path="/home" element={<Home />} />
             <Route path="/masters/:master" element={<Masters />} />
             <Route path="/masters" element={<Masters />} />
-            <Route path="/feedback" element={<Feedback />} />
-            <Route path="/feedback/:feedbackType" element={<Feedback />} />
+            <Route path="/feedbacks" element={<Feedback />} />
+            <Route path="/feedbacks/:feedbackType" element={<Feedback />} />
             <Route path="/checklist" element={<ChecklistManagement />} />
             <Route path="/checklist/:checklistType" element={<ChecklistManagement />} />
             <Route path="*" element={<Navigate to="/home" replace />} />

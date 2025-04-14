@@ -5,12 +5,8 @@ import {
   CardHeader,
   CardBody,
   Heading,
-  Text,
   Select,
-  Button,
-  Grid,
 } from 'grommet';
-import { CoverPage } from '../../../components';
 import { SessionContext, useMonitor } from '../../../context/session';
 import ChecklistItems from './ChecklistItems';
 

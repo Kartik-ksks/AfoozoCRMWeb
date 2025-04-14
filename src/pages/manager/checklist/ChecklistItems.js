@@ -247,13 +247,6 @@ const ChecklistItems = ({ categories, siteId, selectedCategory, checklist }) => 
               onClick={handleReload}
               disabled={loading}
             />
-            <Button
-              primary
-              color="status-critical"
-              label="Submit Checklist"
-              onClick={handleSubmit}
-              disabled={loading}
-            />
           </Box>
         </CardHeader>
       </Card>
@@ -414,14 +407,26 @@ const ChecklistItems = ({ categories, siteId, selectedCategory, checklist }) => 
           )
         ))}
       </Grid>
-
-      <Box direction="row" justify="between" margin={{ top: 'medium' }}>
-        <Text>
-          Total Progress: {
-            Object.values(responses).filter(r => r.done).length
-          } / {totalItems} items completed
-        </Text>
-      </Box>
+      <Card background="dark-1">
+        <CardHeader pad="medium">
+          <Box direction="row" justify="between" align="center" fill>
+            <Text>
+              Total Progress: {
+                Object.values(responses).filter(r => r.done).length
+              } / {totalItems} items completed
+            </Text>
+          </Box>
+          <Box direction="row" gap="small">
+            <Button
+              primary
+              color="status-critical"
+              label="Submit Checklist"
+              onClick={handleSubmit}
+              disabled={loading}
+            />
+          </Box>
+        </CardHeader>
+      </Card>
     </Box>
   );
 };
