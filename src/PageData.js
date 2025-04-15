@@ -78,17 +78,17 @@ const mainPageData = [
     name: 'Feedback',
     Icon: Chat,
     color: 'violet',
-    path: 'feedback',
+    path: 'feedbacks',
     roles: ['admin', 'manager', 'user'],
     items: [
       {
         title: 'Give Feedback',
-        path: '/feedback/write-feedback',
+        path: '/feedbacks/write-feedback',
         roles: ['user'],
       },
       {
         title: 'View Feedback',
-        path: '/feedback/view-feedback',
+        path: '/feedbacks/view-feedback',
         roles: ['admin', 'manager'],
       },
     ],

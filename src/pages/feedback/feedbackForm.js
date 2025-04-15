@@ -17,7 +17,7 @@ import {
 } from 'grommet';
 import { Star } from 'grommet-icons';
 import { SessionContext } from '../../context/session';
-import { LoadingLayer } from '../../components';
+import { LoadingLayer, CoverPage } from '../../components';
 import { validateEmail, validateName } from '../../Utils';
 
 const QuestionTypeComponent = ({ question, value, onChange }) => {
@@ -211,186 +211,202 @@ const FeedbackForm = () => {
     if (loading) return <LoadingLayer />;
 
     return (
-        <Box fill background="light-2" align="center" pad="medium" overflow="auto">
-            <Box width="100%" style={{ maxWidth: '960px' }} height={{ min: 'medium' }} flex={{ grow: 1 }}>
-                <Card background="light-1" flex={{ grow: 1 }} overflow="auto">
-                    <CardHeader pad="medium" background="dark-2">
-                        <Box>
-                            <Heading level={2} margin="none">
-                                Feedback Form
-                            </Heading>
-                            {siteName && (
-                                <Text size="large" weight="bold" margin={{ top: 'small' }}>
-                                    Site: {siteName}
-                                </Text>
-                            )}
-                        </Box>
-                    </CardHeader>
-
-                    <CardBody pad="medium" overflow="auto">
-                        <Form onSubmit={handleSubmit}>
-                            <Box gap="medium">
-                                <FormField label="Name" error={errors.username}>
-                                    <TextInput
-                                        value={formData.username}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                username: e.target.value,
-                                            }))
-                                        }
-                                        placeholder="Enter your name"
-                                    />
-                                </FormField>
-
-                                <FormField label="Email" error={errors.email}>
-                                    <TextInput
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                email: e.target.value,
-                                            }))
-                                        }
-                                        placeholder="Enter your email"
-                                    />
-                                </FormField>
-
-                                <FormField
-                                    label="How satisfied are you with our service?"
-                                    error={errors.satisfied}
-                                >
-                                    <Box direction="row" gap="medium" justify="start" wrap margin={{ top: 'small' }}>
-                                        {[1, 3, 5].map((level) => (
-                                            <Button
-                                                key={level}
-                                                plain
-                                                onClick={() => handleSatisfactionChange(level)}
-                                                focusIndicator={false}
-                                                style={{
-                                                    padding: '12px 24px',
-                                                    borderRadius: '8px',
-                                                    background:
-                                                        satisfied === level
-                                                            ? level === 1
-                                                                ? 'rgba(255, 0, 0, 0.1)'
-                                                                : level === 3
-                                                                    ? 'rgba(255, 193, 7, 0.1)'
-                                                                    : 'rgba(0, 128, 0, 0.1)'
-                                                            : 'white',
-                                                    transition: 'all 0.2s ease',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px',
-                                                }}
-                                            >
-                                                <Text size="xlarge">
-                                                    {level === 1 ? '☹️' : level === 3 ? '😊' : '😄'}
-                                                </Text>
-                                                <Text
-                                                    color={
-                                                        satisfied === level
-                                                            ? level === 1
-                                                                ? 'status-critical'
-                                                                : level === 3
-                                                                    ? 'status-warning'
-                                                                    : 'status-ok'
-                                                            : 'dark-6'
-                                                    }
-                                                >
-                                                    {level === 1
-                                                        ? 'Not Satisfied'
-                                                        : level === 3
-                                                            ? 'Satisfied'
-                                                            : 'Excellent'}
-                                                </Text>
-                                            </Button>
-                                        ))}
-                                    </Box>
-                                </FormField>
-
-                                {questions.length > 0 && (
-                                    <Box gap="medium" margin={{ vertical: 'medium' }}>
-                                        <Heading level={4} margin={{ bottom: 'xsmall' }}>
-                                            Questions
-                                        </Heading>
-                                        {questions.map((question, index) => (
-                                            <Card
-                                                key={question.QuestionId}
-                                                background="light-2"
-                                                pad="medium"
-                                            >
-                                                <FormField label={question.QuestionText}>
-                                                    <QuestionTypeComponent
-                                                        question={question}
-                                                        value={formData.questions[index]?.answer}
-                                                        onChange={(value) => {
-                                                            const newQuestions = [...formData.questions];
-                                                            newQuestions[index] = {
-                                                                ...newQuestions[index],
-                                                                answer: value,
-                                                            };
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                questions: newQuestions,
-                                                            }));
-                                                        }}
-                                                    />
-                                                </FormField>
-                                            </Card>
-                                        ))}
-                                    </Box>
+        <Box
+            fill
+            background="light-2"
+        >
+            <CoverPage title="Feedback Form">
+                <Box
+                    width={{ max: '960px' }}
+                    height={{ max: '100%' }}
+                    overflow="auto"
+                    alignSelf="center"
+                    flex={false}
+                    pad={{bottom: "medium"}}
+                >
+                    <Card
+                        background="light-1"
+                        width="100%"
+                        border={false}
+                    >
+                        <CardHeader pad="medium" background="dark-2">
+                            <Box>
+                                <Heading level={2} margin="none">
+                                    Feedback Form
+                                </Heading>
+                                {siteName && (
+                                    <Text size="large" weight="bold" margin={{ top: 'small' }}>
+                                        Site: {siteName}
+                                    </Text>
                                 )}
-
-                                <FormField label="Additional Comments">
-                                    <TextArea
-                                        value={formData.comment}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                comment: e.target.value,
-                                            }))
-                                        }
-                                        placeholder="Please share your overall experience..."
-                                        rows={5}
-                                    />
-                                </FormField>
-
-                                <Box margin={{ top: 'medium', bottom: 'small' }} align="center">
-                                    <Button
-                                        type="submit"
-                                        primary
-                                        color="brand"
-                                        label={status === 'sending' ? 'Submitting...' : 'Submit Feedback'}
-                                        disabled={status === 'sending'}
-                                    />
-                                </Box>
                             </Box>
-                        </Form>
-                    </CardBody>
-                </Card>
+                        </CardHeader>
 
-                {status === 'success' && (
-                    <Notification
-                        toast
-                        status="normal"
-                        message="Thank you for your feedback!"
-                        onClose={() => setStatus('')}
-                        margin={{ top: 'medium' }}
-                    />
-                )}
-                {status === 'error' && (
-                    <Notification
-                        toast
-                        status="critical"
-                        message="Error submitting feedback. Please try again."
-                        onClose={() => setStatus('')}
-                        margin={{ top: 'medium' }}
-                    />
-                )}
-            </Box>
+                        <CardBody pad="medium">
+                            <Form onSubmit={handleSubmit}>
+                                <Box gap="medium">
+                                    <FormField label="Name" error={errors.username}>
+                                        <TextInput
+                                            value={formData.username}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    username: e.target.value,
+                                                }))
+                                            }
+                                            placeholder="Enter your name"
+                                        />
+                                    </FormField>
+
+                                    <FormField label="Email" error={errors.email}>
+                                        <TextInput
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    email: e.target.value,
+                                                }))
+                                            }
+                                            placeholder="Enter your email"
+                                        />
+                                    </FormField>
+
+                                    <FormField
+                                        label="How satisfied are you with our service?"
+                                        error={errors.satisfied}
+                                    >
+                                        <Box direction="row" gap="medium" justify="start" wrap margin={{ top: 'small' }}>
+                                            {[1, 3, 5].map((level) => (
+                                                <Button
+                                                    key={level}
+                                                    plain
+                                                    onClick={() => handleSatisfactionChange(level)}
+                                                    focusIndicator={false}
+                                                    style={{
+                                                        padding: '12px 24px',
+                                                        borderRadius: '8px',
+                                                        background:
+                                                            satisfied === level
+                                                                ? level === 1
+                                                                    ? 'rgba(255, 0, 0, 0.1)'
+                                                                    : level === 3
+                                                                        ? 'rgba(255, 193, 7, 0.1)'
+                                                                        : 'rgba(0, 128, 0, 0.1)'
+                                                                : 'white',
+                                                        transition: 'all 0.2s ease',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                    }}
+                                                >
+                                                    <Text size="xlarge">
+                                                        {level === 1 ? '☹️' : level === 3 ? '😊' : '😄'}
+                                                    </Text>
+                                                    <Text
+                                                        color={
+                                                            satisfied === level
+                                                                ? level === 1
+                                                                    ? 'status-critical'
+                                                                    : level === 3
+                                                                        ? 'status-warning'
+                                                                        : 'status-ok'
+                                                                : 'dark-6'
+                                                        }
+                                                    >
+                                                        {level === 1
+                                                            ? 'Not Satisfied'
+                                                            : level === 3
+                                                                ? 'Satisfied'
+                                                                : 'Excellent'}
+                                                    </Text>
+                                                </Button>
+                                            ))}
+                                        </Box>
+                                    </FormField>
+
+                                    {questions.length > 0 && (
+                                        <Box gap="medium" margin={{ vertical: 'medium' }}>
+                                            <Heading level={4} margin={{ bottom: 'xsmall' }}>
+                                                Questions
+                                            </Heading>
+                                            {questions.map((question, index) => (
+                                                <Card
+                                                    key={question.QuestionId}
+                                                    background="light-2"
+                                                    pad="medium"
+                                                >
+                                                    <FormField label={question.QuestionText}>
+                                                        <QuestionTypeComponent
+                                                            question={question}
+                                                            value={formData.questions[index]?.answer}
+                                                            onChange={(value) => {
+                                                                const newQuestions = [...formData.questions];
+                                                                newQuestions[index] = {
+                                                                    ...newQuestions[index],
+                                                                    answer: value,
+                                                                };
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    questions: newQuestions,
+                                                                }));
+                                                            }}
+                                                        />
+                                                    </FormField>
+                                                </Card>
+                                            ))}
+                                        </Box>
+                                    )}
+
+                                    <FormField label="Additional Comments">
+                                        <TextArea
+                                            value={formData.comment}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    comment: e.target.value,
+                                                }))
+                                            }
+                                            placeholder="Please share your overall experience..."
+                                            rows={5}
+                                        />
+                                    </FormField>
+
+                                    <Box margin={{ top: 'medium', bottom: 'small' }} align="center">
+                                        <Button
+                                            type="submit"
+                                            primary
+                                            color="brand"
+                                            label={status === 'sending' ? 'Submitting...' : 'Submit Feedback'}
+                                            disabled={status === 'sending'}
+                                        />
+                                    </Box>
+                                </Box>
+                            </Form>
+                        </CardBody>
+                    </Card>
+
+                    {status === 'success' && (
+                        <Notification
+                            toast
+                            status="normal"
+                            message="Thank you for your feedback!"
+                            onClose={() => setStatus('')}
+                            margin={{ top: 'medium' }}
+                        />
+                    )}
+                    {status === 'error' && (
+                        <Notification
+                            toast
+                            status="critical"
+                            message="Error submitting feedback. Please try again."
+                            onClose={() => setStatus('')}
+                            margin={{ top: 'medium' }}
+                        />
+                    )}
+                </Box>
+            </CoverPage>
         </Box>
     );
 };

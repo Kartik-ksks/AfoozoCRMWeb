@@ -70,7 +70,7 @@ const Summary = () => {
           { label: 'Total Users', icon: <Group />, count: stats.users, path: '/masters/users', bg: 'brand' },
           { label: 'Total Sites', icon: <Location />, count: stats.sites, path: '/masters/sites', bg: 'black' },
           { label: 'Questions', icon: <Help />, count: stats.questions, path: '/masters/site-questions', bg: 'black' },
-          { label: 'Total Ratings', icon: <Star />, count: stats.totalFeedbacks, path: '/feedback/view-feedback', bg: 'status-warning' },
+          { label: 'Total Ratings', icon: <Star />, count: stats.totalFeedbacks, path: '/feedbacks/view-feedback', bg: 'status-warning' },
         ].map(({ label, icon, count, path, bg }) => (
           <Card key={label} background={bg} elevation="none" height="xsmall">
             <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
@@ -95,7 +95,7 @@ const Summary = () => {
           <CardHeader pad={{ horizontal: 'medium', vertical: 'small' }}>
             <Box direction="row" justify="between" align="center" fill>
               <Text color="light-1" weight="bold" size="small">Overall Rating</Text>
-              <Button plain icon={<LinkNext size="small" color="light-3" />} onClick={() => navigate('/feedback/view-feedback')} />
+              <Button plain icon={<LinkNext size="small" color="light-3" />} onClick={() => navigate('/feedbacks/view-feedback')} />
             </Box>
           </CardHeader>
           <CardBody pad="medium">
