@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import { Button, Text, Box } from 'grommet';
+import { Box } from 'grommet';
 
 import { DashboardProvider } from './context/dashboard';
 import { ResponsiveContext } from './context/responsive';
@@ -80,12 +80,12 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 setUserRole(res.user.role);
                 const newMenuData = getMenuDataForRole(res.user.role);
                 setMenuData(newMenuData);
-                
+
                 // Redirect manager users to ChecklistManagement page
                 if (res.user.role === "manager") {
                     setTimeout(() => navigate('/checklist'), 100);
                 }
-                
+
                 return res;
             }
             return res;
@@ -155,8 +155,8 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                     handleLogout={handleLogout}
                     isMobile={isMobile}
                 />
-                <Box 
-                    flex 
+                <Box
+                    flex
                     direction={isBreakSidebar() ? 'column-reverse' : 'row'}
                     height={isMobile ? '100%' : 'auto'}
                 >
@@ -168,8 +168,8 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                         setShowSidebar={setShowSidebar}
                         isMobile={isMobile}
                     />
-                    <Box 
-                        flex 
+                    <Box
+                        flex
                         overflow="auto"
                         className="scroll-enabled"
                         height={isMobile ? '100%' : 'auto'}
@@ -206,9 +206,9 @@ const MenuApp = ({ themeMode, toggleThemeMode }) => {
                 {loggedIn === null && restoredSession ? (
                     <LoadingLayer />
                 ) : (
-                    <Box 
-                        data-id="id-indiTechCrm" 
-                        fill 
+                    <Box
+                        data-id="id-indiTechCrm"
+                        fill
                         overflow={isMobile ? "hidden" : "auto"}
                         style={isMobile ? {
                             height: '100vh',
