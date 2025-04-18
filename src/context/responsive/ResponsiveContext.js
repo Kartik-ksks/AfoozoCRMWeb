@@ -46,7 +46,9 @@ export const Provider = ({ children = null }) => {
       setViewportHeight(windowHeight);
       
       // Update CSS custom properties for viewport height (vh issues on mobile)
-      document.documentElement.style.setProperty('--vh', `${windowHeight * 0.01}px`);
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      document.documentElement.style.setProperty('--vw', `${window.innerWidth * 0.01}px`);
+      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     };
     
     // Initial check

@@ -1,15 +1,13 @@
-import React from 'react';
-import { Grommet } from 'grommet';
-import theme from './Theme';
-import { HashRouter } from 'react-router-dom';
-import { ResponsiveProvider } from './context/responsive';
-import { SessionProvider } from './context/session';
-import { MenuProvider } from './context/menu';
-import { NotificationProvider } from './context/notification/NotificationContext';
-import MenuApp from './MenuApp';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
-import PWADebug from './components/PWADebug';
-import './styles/mobile.css';
+import React from "react";
+import { Grommet } from "grommet";
+import theme from "./Theme";
+import { HashRouter } from "react-router-dom";
+import { ResponsiveProvider } from "./context/responsive";
+import { SessionProvider } from "./context/session";
+import { MenuProvider } from "./context/menu";
+import { NotificationProvider } from "./context/notification/NotificationContext";
+import MenuApp from "./MenuApp";
+import "./styles/mobile.css";
 
 if (!window.matchMedia) {
   // undefined when running jest tests
@@ -17,22 +15,21 @@ if (!window.matchMedia) {
 }
 
 const mqlDarkScheme = window.matchMedia // undefined when running jest tests
-  ? window.matchMedia('(prefers-color-scheme: dark)')
+  ? window.matchMedia("(prefers-color-scheme: dark)")
   : (window.matchMedia = () => ({
-    matches: false,
-  }));
+      matches: false,
+    }));
 
 const App = () => {
-  const systemThemeMode = mqlDarkScheme.matches ? 'dark' : 'light';
-  let initialThemeMode = localStorage.getItem('themeMode');
-  if (!initialThemeMode)
-    initialThemeMode = systemThemeMode;
+  const systemThemeMode = mqlDarkScheme.matches ? "dark" : "light";
+  let initialThemeMode = localStorage.getItem("themeMode");
+  if (!initialThemeMode) initialThemeMode = systemThemeMode;
   const [themeMode, setThemeMode] = React.useState(initialThemeMode);
 
   React.useEffect(() => {
     const handler = (e) => {
-      const mode = e.matches ? 'dark' : 'light';
-      if (!localStorage.getItem('themeMode')) {
+      const mode = e.matches ? "dark" : "light";
+      if (!localStorage.getItem("themeMode")) {
         setThemeMode(mode);
       }
     };
@@ -43,8 +40,8 @@ const App = () => {
   }, []);
 
   const toggleThemeMode = () => {
-    const newMode = themeMode === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('themeMode', newMode);
+    const newMode = themeMode === "dark" ? "light" : "dark";
+    localStorage.setItem("themeMode", newMode);
     setThemeMode(newMode);
   };
 
@@ -60,8 +57,8 @@ const App = () => {
                     themeMode={themeMode}
                     toggleThemeMode={toggleThemeMode}
                   />
-                  <PWAInstallPrompt />
-                  {process.env.NODE_ENV === 'development' && <PWADebug />}
+                  {/* <PWAInstallPrompt />
+                  {process.env.NODE_ENV === "development" && <PWADebug />} */}
                 </MenuProvider>
               </NotificationProvider>
             </ResponsiveProvider>

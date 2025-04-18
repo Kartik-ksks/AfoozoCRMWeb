@@ -3,6 +3,7 @@
 /* Use custom viewport height property for better mobile height handling */
 :root {
   --app-height: 100%;
+  --vh: 1vh;
 }
 
 /* Apply to elements that should use the reliable viewport height */
@@ -12,76 +13,48 @@
 }
 
 /* Mobile optimizations */
-.mobile-device {
+@media (max-width: 768px) {
   /* Improve touch targets */
   button, 
   [role="button"], 
   .clickable, 
-  input[type="submit"], 
+  input[type="submit"],
   input[type="button"] {
     min-height: 44px;
     min-width: 44px;
+    padding: 12px !important;
   }
-  
+
   /* Improve form inputs */
   input, select, textarea {
-    font-size: 16px !important; /* Prevent zoom on focus in iOS */
+    font-size: 16px !important;
+    padding: 10px !important;
+    width: 100%;
+    margin: 8px 0;
   }
-  
-  /* Improve scrolling */
+
+  /* Better scrolling */
   .scroll-enabled {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
     overscroll-behavior-y: contain;
   }
-  
-  /* Fix fixed positioning */
-  .fixed-bottom {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-  
-  .fixed-top {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    padding-top: env(safe-area-inset-top, 0);
-  }
-  
-  /* Fix notch issues on iPhone */
-  .notch-padding {
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
-  }
-}
 
-/* Improve mobile forms */
-@media (max-width: 768px) {
-  /* Stack form elements vertically */
-  form > div {
-    flex-direction: column !important;
-  }
-  
-  /* Make buttons more tappable */
-  button, [role="button"] {
+  /* Improve layout */
+  .Box {
     padding: 12px !important;
   }
-  
-  /* Improve readability */
-  body {
-    font-size: 16px !important;
-    line-height: 1.5 !important;
+
+  /* Stack elements vertically */
+  [class*="Row"] {
+    flex-direction: column !important;
   }
-  
-  /* Improve card display */
-  [class*="Card"] {
-    width: 100% !important;
-    margin: 0 0 16px 0 !important;
+
+  /* Fix notch issues */
+  .notch-padding {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
-} 
+}
