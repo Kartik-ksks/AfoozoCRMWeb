@@ -2,8 +2,14 @@
 
 /* Use custom viewport height property for better mobile height handling */
 :root {
-  --app-height: 100%;
-  --vh: 1vh;
+  --app-height: 100vh;
+  --vh: calc(var(--app-height) / 100);
+}
+
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --app-height: -webkit-fill-available;
+  }
 }
 
 /* Apply to elements that should use the reliable viewport height */
